@@ -24,45 +24,58 @@ module.exports = {
   account: () => req(TRADE_BASE, "/v2/account"),
   positions: () => req(TRADE_BASE, "/v2/positions"),
 
-  // Prezzi correnti + variazione giornaliera (con segno) da un'unica chiamata snapshot
-  async marketData(symbols) {
-    const j = await req(DATA_BASE, `/v2/stocks/snapshots?symbols=${symbols.join(",")}&feed=iex`);
+  // Prezzi correnti + variazione giornaliera (con segno): azioni (v2) e crypto (v1beta3) in parallelo
+  async marketData(symbols, cryptoSymbols = []) {
+    const [stocks, crypto] = await Promise.all([
+      symbols.length
+        ? req(DATA_BASE, `/v2/stocks/snapshots?symbols=${symbols.join(",")}&feed=iex`)
+        : {},
+      cryptoSymbols.length
+        ? req(DATA_BASE, `/v1beta3/crypto/us/snapshots?symbols=${cryptoSymbols.map(encodeURIComponent).join(",")}`)
+        : { snapshots: {} },
+    ]);
     const prices = {};
     const daily = {};
-    for (const s of symbols) {
-      const snap = j[s];
-      if (!snap) continue;
+    const digest = (sym, snap) => {
+      if (!snap) return;
       const price =
         snap.latestTrade?.p ??
         snap.minuteBar?.c ??
         snap.dailyBar?.c ??
         snap.prevDailyBar?.c ??
         null;
-      prices[s] = price;
+      prices[sym] = price;
       const prevClose = snap.prevDailyBar?.c ?? null;
-      daily[s] = {
+      daily[sym] = {
         prevClose,
         changePct: price != null && prevClose ? (price / prevClose - 1) * 100 : null,
       };
-    }
+    };
+    for (const s of symbols) digest(s, stocks[s]);
+    for (const s of cryptoSymbols) digest(s, (crypto.snapshots || {})[s]);
     return { prices, daily };
   },
 
-  // Trend % sugli ultimi N giorni di barre giornaliere (una chiamata per sessione decisionale)
-  async trend(symbols, days) {
+  // Trend % sugli ultimi N giorni di barre giornaliere: azioni + crypto (una volta per sessione)
+  async trend(symbols, cryptoSymbols, days) {
     const start = new Date(Date.now() - (days * 2 + 6) * 86400000).toISOString();
-    const j = await req(
-      DATA_BASE,
-      `/v2/stocks/bars?symbols=${symbols.join(",")}&timeframe=1Day&start=${start}&limit=1000&adjustment=raw&feed=iex`
-    );
+    const [js, jc] = await Promise.all([
+      symbols.length
+        ? req(DATA_BASE, `/v2/stocks/bars?symbols=${symbols.join(",")}&timeframe=1Day&start=${start}&limit=1000&adjustment=raw&feed=iex`)
+        : { bars: {} },
+      cryptoSymbols.length
+        ? req(DATA_BASE, `/v1beta3/crypto/us/bars?symbols=${cryptoSymbols.map(encodeURIComponent).join(",")}&timeframe=1Day&start=${start}&limit=1000`)
+        : { bars: {} },
+    ]);
     const out = {};
-    for (const s of symbols) {
-      const bars = (j.bars && j.bars[s]) || [];
+    const digest = (sym, bars) => {
       if (bars.length >= 2) {
         const win = bars.slice(-(days + 1));
-        out[s] = (win[win.length - 1].c / win[0].c - 1) * 100;
+        out[sym] = (win[win.length - 1].c / win[0].c - 1) * 100;
       }
-    }
+    };
+    for (const s of symbols) digest(s, (js.bars && js.bars[s]) || []);
+    for (const s of cryptoSymbols) digest(s, (jc.bars && jc.bars[s]) || []);
     return out;
   },
 
@@ -88,11 +101,11 @@ module.exports = {
         notional: Math.round(notional * 100) / 100,
         side, // "buy" | "sell"
         type: "market",
-        time_in_force: "day",
+        time_in_force: symbol.includes("/") ? "gtc" : "day", // crypto: gtc (day non supportato)
       }),
     });
   },
 
   // Chiusura totale di una posizione (usata dallo stop-loss deterministico)
-  closePosition: (symbol) => req(TRADE_BASE, `/v2/positions/${symbol}`, { method: "DELETE" }),
+  closePosition: (symbol) => req(TRADE_BASE, `/v2/positions/${symbol.replace("/", "")}`, { method: "DELETE" }),
 };

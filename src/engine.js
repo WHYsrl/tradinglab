@@ -30,9 +30,10 @@ function buildPrompt(ctx) {
     : "- nessuna notizia rilevante nelle ultime ore";
 
   return `Sei il motore decisionale di un ESPERIMENTO di trading su conto PAPER (nessun denaro reale).
-Universo di ETF internazionali: ${C.ASSET_DESC}.
+Universo: ETF internazionali — ${C.ASSET_DESC} — e crypto — ${C.CRYPTO_DESC}.
 
 MOTIVO DI QUESTA SESSIONE: ${ctx.trigger}
+${ctx.marketOpen === false ? "\nBORSA USA CHIUSA: in questo momento sono eseguibili solo ordini crypto; per gli ETF usa hold (le decisioni su di essi si riproporranno in apertura)." : ""}
 
 MERCATO:
 ${marketLines}
@@ -41,7 +42,8 @@ PORTAFOGLIO:
 - Equity: ${ctx.equity.toFixed(2)} USD, liquidità: ${ctx.cash.toFixed(2)} USD
 - Posizioni: ${JSON.stringify(positions)}
 - Profilo di rischio: ${r.label} → esposizione max ${r.maxExposure * 100}% dell'equity, singola operazione max ${r.maxTradePct * 100}% (${(ctx.equity * r.maxTradePct).toFixed(0)} USD)
-- Stop-loss automatico per posizione a -${r.stopLossPct * 100}%: lo applica il sistema, non devi gestirlo tu
+- Stop-loss automatico (lo applica il sistema, non devi gestirlo tu): -${r.stopLossPct * 100}% sugli ETF, -${r.cryptoStopLossPct * 100}% sulle crypto
+- Crypto: esposizione massima ${r.cryptoExposure * 100}% dell'equity (sub-tetto dentro l'esposizione totale)
 - Ordini ancora disponibili oggi: ${ctx.remainingOrders}
 
 ULTIME DECISIONI E COME SONO ANDATE: ${ctx.lastDecisionsSummary || "nessuna"}
@@ -53,7 +55,7 @@ Valuta il quadro e decidi. L'orizzonte è tattico (ore/giorni), non scalping. Op
 
 Rispondi SOLO con JSON valido, nessun testo prima o dopo:
 {"view":"quadro di mercato in 1-2 frasi","decisions":[{"asset":"SPY","action":"buy|sell|hold","usd":0,"reasoning":"motivazione breve"}]}
-"usd" è il controvalore dell'operazione (0 se hold). Rispetta i limiti del profilo di rischio.`;
+"usd" è il controvalore dell'operazione (0 se hold). I simboli crypto vanno scritti esattamente "BTC/USD" o "ETH/USD". Rispetta i limiti del profilo di rischio.`;
 }
 
 function extractJSON(text) {

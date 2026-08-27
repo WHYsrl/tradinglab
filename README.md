@@ -1,6 +1,6 @@
 # Trading Lab — esperimento di trading AI event-driven
 
-Sistema autonomo che monitora prezzi e notizie sui mercati internazionali (ETF USA: SPY, QQQ, EZU, EWJ, EEM, GLD), e chiama Claude come motore decisionale **solo quando succede qualcosa**: movimento di prezzo oltre soglia, notizia rilevante, o check-in programmati (apertura, metà seduta, pre-chiusura). Gli ordini vengono eseguiti su conto **Alpaca paper** (denaro virtuale) e passano da un risk layer deterministico che l'AI non può scavalcare.
+Sistema autonomo che monitora prezzi e notizie sui mercati internazionali (ETF USA: SPY, QQQ, EZU, EWJ, EEM, GLD) e sulle crypto (BTC/USD, ETH/USD, negoziabili 24/7), e chiama Claude come motore decisionale **solo quando succede qualcosa**: movimento di prezzo oltre soglia, notizia rilevante, o check-in programmati (apertura, metà seduta, pre-chiusura). Gli ordini vengono eseguiti su conto **Alpaca paper** (denaro virtuale) e passano da un risk layer deterministico che l'AI non può scavalcare.
 
 ## Architettura
 
@@ -33,9 +33,10 @@ Costo indicativo: istanza Starter ~7 $/mese + disco ~0,25 $/mese + consumo API A
 ## Sicurezza e limiti (non negoziabili)
 
 - **Stop globale automatico TRAILING**: se l'equity scende oltre il drawdown massimo (default −20% dal picco di equity, high-water mark) il trading si ferma da solo; si riparte solo manualmente dalla dashboard. Protegge anche i profitti accumulati.
-- **Stop-loss automatico per posizione**: −4% (prudente) / −6% (bilanciato) / −8% (aggressivo). Chiusura deterministica eseguita dal monitor, fuori dal controllo dell'AI; non conta nel tetto ordini giornaliero.
+- **Stop-loss automatico per posizione**: ETF −4% / −6% / −8% e crypto −6% / −8% / −10% (prudente / bilanciato / aggressivo). Chiusura deterministica eseguita dal monitor, fuori dal controllo dell'AI; non conta nel tetto ordini giornaliero.
 - **Cooldown**: minimo 20 minuti tra due sessioni decisionali (salvo emergenza: movimento ≥ 2× soglia).
 - **Tetto ordini**: massimo 12 al giorno.
+- **Crypto**: sub-tetto di esposizione (10% / 20% / 40% dell'equity per profilo), trigger di prezzo più larghi (3% / 2.5% / 2%) e trading 24/7; a borsa USA chiusa il risk layer respinge qualunque ordine su ETF.
 - Il risk layer taglia qualunque ordine oltre i limiti del profilo, qualunque cosa dica il modello.
 
 ## Metodo sperimentale suggerito

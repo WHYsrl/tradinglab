@@ -1,17 +1,26 @@
 // ————— Configurazione dell'esperimento —————
 
 module.exports = {
-  // Universo: ETF internazionali quotati USA (negoziabili su Alpaca)
+  // Universo azionario: ETF internazionali quotati USA (orario di borsa: 15:30–22:00 ora italiana)
   ASSETS: ["SPY", "QQQ", "EZU", "EWJ", "EEM", "GLD"],
   ASSET_DESC:
     "SPY (S&P 500 USA), QQQ (Nasdaq 100), EZU (Eurozona), EWJ (Giappone), EEM (mercati emergenti), GLD (oro)",
 
+  // Universo crypto: negoziabile 24/7 su Alpaca (nelle posizioni compare senza slash: BTCUSD)
+  CRYPTO_ASSETS: ["BTC/USD", "ETH/USD"],
+  CRYPTO_DESC: "BTC/USD (Bitcoin), ETH/USD (Ethereum) — negoziabili 24/7",
+  CRYPTO_NEWS_SYMBOLS: ["BTCUSD", "ETHUSD"],
+
   // Profili di rischio: limiti HARD applicati dal risk layer, fuori dal controllo dell'AI.
-  // stopLossPct: chiusura automatica e deterministica della posizione se il P/L scende sotto -X%.
+  // stopLossPct: chiusura automatica della posizione sotto -X%.
+  // cryptoExposure è un SUB-tetto dentro maxExposure; trigger e stop-loss crypto sono più larghi (volatilità).
   RISK_PROFILES: {
-    prudente:   { label: "Prudente",   maxExposure: 0.30, maxTradePct: 0.05, priceTriggerPct: 1.5, stopLossPct: 0.04 },
-    bilanciato: { label: "Bilanciato", maxExposure: 0.60, maxTradePct: 0.10, priceTriggerPct: 1.0, stopLossPct: 0.06 },
-    aggressivo: { label: "Aggressivo", maxExposure: 0.95, maxTradePct: 0.25, priceTriggerPct: 0.7, stopLossPct: 0.08 },
+    prudente:   { label: "Prudente",   maxExposure: 0.30, maxTradePct: 0.05, priceTriggerPct: 1.5, stopLossPct: 0.04,
+                  cryptoExposure: 0.10, cryptoTriggerPct: 3.0, cryptoStopLossPct: 0.06 },
+    bilanciato: { label: "Bilanciato", maxExposure: 0.60, maxTradePct: 0.10, priceTriggerPct: 1.0, stopLossPct: 0.06,
+                  cryptoExposure: 0.20, cryptoTriggerPct: 2.5, cryptoStopLossPct: 0.08 },
+    aggressivo: { label: "Aggressivo", maxExposure: 0.95, maxTradePct: 0.25, priceTriggerPct: 0.7, stopLossPct: 0.08,
+                  cryptoExposure: 0.40, cryptoTriggerPct: 2.0, cryptoStopLossPct: 0.10 },
   },
 
   // Motore
@@ -24,7 +33,7 @@ module.exports = {
   NEWS_EVERY_TICKS: 5,       // notizie ogni 5 tick (~5 min)
   DECISION_COOLDOWN_MIN: 20, // minimo tra due decisioni (salvo emergenza: 2x soglia)
   MAX_ORDERS_PER_DAY: 12,
-  CLOSED_SNAPSHOT_EVERY_TICKS: 30, // a mercato chiuso uno snapshot ogni ~30 min (l'equity non cambia)
+  CLOSED_SNAPSHOT_EVERY_TICKS: 5, // a borsa chiusa uno snapshot ogni ~5 min (le crypto si muovono comunque)
 
   // Kill switch automatico TRAILING: se l'equity scende oltre X% dal PICCO (high-water mark)
   // il trading si ferma da solo. Protegge anche i profitti accumulati, non solo il capitale iniziale.
@@ -37,5 +46,6 @@ module.exports = {
   NEWS_KEYWORDS: [
     "fed", "rate", "tassi", "bce", "ecb", "inflation", "cpi", "recession",
     "tariff", "dazio", "war", "crash", "selloff", "default", "opec", "earnings",
+    "bitcoin", "btc", "ethereum", "crypto", "stablecoin", "halving", "sec",
   ],
 };

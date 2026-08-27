@@ -8,6 +8,8 @@ let tickCount = 0;
 let running = false;
 let warnedNoKeys = false;
 
+const ALL_ASSETS = [...C.ASSETS, ...C.CRYPTO_ASSETS];
+
 const nyTime = () => {
   const p = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", hour12: false,
@@ -62,13 +64,15 @@ async function tick() {
       alpaca.clock(),
       alpaca.account(),
       alpaca.positions(),
-      alpaca.marketData(C.ASSETS),
+      alpaca.marketData(C.ASSETS, C.CRYPTO_ASSETS),
     ]);
     const prices = market.prices;
     const equity = Number(account.equity);
     const cash = Number(account.cash);
+    const profile = riskProfile();
+    const prof = C.RISK_PROFILES[profile];
 
-    // Snapshot: sempre a mercato aperto; ridotti a mercato chiuso (l'equity non cambia)
+    // Snapshot: sempre a borsa aperta; ogni ~5 min a borsa chiusa (le crypto si muovono comunque)
     if (clock.is_open || tickCount % C.CLOSED_SNAPSHOT_EVERY_TICKS === 1) {
       db.addSnapshot(equity, cash, prices);
     }
@@ -83,14 +87,16 @@ async function tick() {
       db.addEvent("halt", { equity, peak });
     }
 
-    const profile = riskProfile();
     const tradingOn = process.env.TRADING_ENABLED === "true" && !db.kvGet("halted");
 
-    // Stop-loss deterministico per posizione: non passa dall'AI e non conta nel tetto ordini
+    // Stop-loss deterministico per posizione: non passa dall'AI e non conta nel tetto ordini.
+    // ETF solo a borsa aperta; crypto 24/7.
     const closedNow = new Set();
-    if (clock.is_open && tradingOn) {
-      const slPct = C.RISK_PROFILES[profile].stopLossPct;
+    if (tradingOn) {
       for (const p of positions) {
+        const crypto = p.asset_class === "crypto";
+        if (!crypto && !clock.is_open) continue;
+        const slPct = crypto ? prof.cryptoStopLossPct : prof.stopLossPct;
         const plpc = Number(p.unrealized_plpc);
         const key = `stoploss:${p.symbol}`;
         if (plpc <= -slPct && Date.now() - db.kvGet(key, 0) > 30 * 60 * 1000) {
@@ -107,12 +113,12 @@ async function tick() {
     }
     const openPositions = positions.filter((p) => !closedNow.has(p.symbol));
 
-    // Notizie (anche a mercati chiusi: alimentano il contesto della sessione successiva)
+    // Notizie (anche a borsa chiusa: le crypto possono reagire subito, gli ETF in apertura)
     let freshNews = [];
     if (tickCount % C.NEWS_EVERY_TICKS === 1) {
       const since = db.kvGet("news_since", Date.now() - 12 * 3600 * 1000);
       try {
-        const items = await alpaca.news(C.ASSETS, since);
+        const items = await alpaca.news([...C.ASSETS, ...C.CRYPTO_NEWS_SYMBOLS], since);
         freshNews = db.addNews(items);
         db.kvSet("news_since", Date.now() - 5 * 60 * 1000);
       } catch (e) {
@@ -122,21 +128,25 @@ async function tick() {
 
     // ————— Trigger —————
     const triggers = [];
-    const thr = C.RISK_PROFILES[profile].priceTriggerPct;
     const ref = db.kvGet("last_decision_prices", prices);
 
-    if (clock.is_open) {
-      for (const a of C.ASSETS) {
-        if (!prices[a] || !ref[a]) continue;
-        const movePct = (prices[a] / ref[a] - 1) * 100; // CON SEGNO: il modello deve sapere la direzione
-        if (Math.abs(movePct) >= thr) {
-          triggers.push({
-            type: "price",
-            desc: `${a} ${movePct >= 0 ? "+" : ""}${movePct.toFixed(2)}% dall'ultima sessione`,
-            emergency: Math.abs(movePct) >= thr * 2,
-          });
-        }
+    const priceTrigger = (a, thr) => {
+      if (!prices[a] || !ref[a]) return;
+      const movePct = (prices[a] / ref[a] - 1) * 100; // CON SEGNO: il modello deve sapere la direzione
+      if (Math.abs(movePct) >= thr) {
+        triggers.push({
+          type: "price",
+          desc: `${a} ${movePct >= 0 ? "+" : ""}${movePct.toFixed(2)}% dall'ultima sessione`,
+          emergency: Math.abs(movePct) >= thr * 2,
+        });
       }
+    };
+
+    // Crypto: trigger di prezzo attivi 24/7 (soglia più larga: volatilità maggiore)
+    for (const a of C.CRYPTO_ASSETS) priceTrigger(a, prof.cryptoTriggerPct);
+
+    if (clock.is_open) {
+      for (const a of C.ASSETS) priceTrigger(a, prof.priceTriggerPct);
 
       // Check-in programmati (una volta al giorno ciascuno; robusti a riavvii tardivi)
       const t = nyTime();
@@ -153,14 +163,14 @@ async function tick() {
         }
       }
       if (dirty) db.kvSet(`checkins:${day}`, done);
+    }
 
-      // Notizie con parole chiave
-      for (const n of freshNews) {
-        const h = (n.headline || "").toLowerCase();
-        if (C.NEWS_KEYWORDS.some((k) => h.includes(k))) {
-          triggers.push({ type: "news", desc: `notizia rilevante: "${n.headline}"`, emergency: false });
-          break;
-        }
+    // Notizie con parole chiave: anche a borsa chiusa (le crypto sono sempre negoziabili)
+    for (const n of freshNews) {
+      const h = (n.headline || "").toLowerCase();
+      if (C.NEWS_KEYWORDS.some((k) => h.includes(k))) {
+        triggers.push({ type: "news", desc: `notizia rilevante: "${n.headline}"`, emergency: false });
+        break;
       }
     }
 
@@ -190,12 +200,12 @@ async function tick() {
     // Trend a N giorni: una sola chiamata, solo quando serve davvero una decisione
     let trendData = {};
     try {
-      trendData = await alpaca.trend(C.ASSETS, C.TREND_DAYS);
+      trendData = await alpaca.trend(C.ASSETS, C.CRYPTO_ASSETS, C.TREND_DAYS);
     } catch (e) {
       db.addEvent("error", { where: "trend", msg: e.message });
     }
     const marketCtx = {};
-    for (const a of C.ASSETS) {
+    for (const a of ALL_ASSETS) {
       marketCtx[a] = {
         price: prices[a] ?? null,
         changePct: (market.daily[a] && market.daily[a].changePct) ?? null,
@@ -218,6 +228,7 @@ async function tick() {
       cash,
       positions: openPositions,
       risk: profile,
+      marketOpen: clock.is_open,
       news: db.recentNews(12),
       lastDecisionsSummary: decisionsWithOutcome(prices),
       stopLossNote,
@@ -249,7 +260,7 @@ async function tick() {
 }
 
 function start() {
-  db.addEvent("boot", { risk: riskProfile(), assets: C.ASSETS });
+  db.addEvent("boot", { risk: riskProfile(), assets: ALL_ASSETS });
   tick();
   setInterval(tick, C.TICK_SECONDS * 1000);
 }
