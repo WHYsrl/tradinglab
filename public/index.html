@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trading Lab</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root {
+    --paper:#EEF1F4; --card:#fff; --ink:#14181D; --soft:#5A6572; --line:#D6DCE2;
+    --cobalt:#1F4FD8; --up:#0E7A4D; --down:#C03325;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);padding:16px 14px 60px}
+  .wrap{max-width:760px;margin:0 auto}
+  header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:10px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--soft)}
+  h1{margin:4px 0 0;font-size:24px;font-weight:800}
+  .badge{font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:4px;color:#fff}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:14px}
+  .big{font-family:var(--mono);font-size:34px;font-weight:700}
+  .ret{font-family:var(--mono);font-size:16px;font-weight:700}
+  .meta{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--soft);margin-top:8px}
+  .meta b{color:var(--ink)}
+  .lbl{font-family:var(--mono);font-size:11px;color:var(--soft);letter-spacing:.1em;margin-bottom:6px}
+  button{font-family:var(--mono);font-size:13px;padding:10px 14px;border-radius:6px;border:1px solid var(--line);background:var(--card);cursor:pointer}
+  button.danger{color:var(--down);border-color:var(--down)}
+  button.ok{color:#fff;background:var(--up);border-color:var(--up)}
+  .entry{border-left:3px solid var(--cobalt);background:var(--card);border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:10px}
+  .entry .head{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--soft)}
+  .entry .view{font-style:italic;font-size:14px;margin:6px 0}
+  .op{font-family:var(--mono);font-size:12px;padding:3px 0}
+  .buy{color:var(--up);font-weight:700}.sell{color:var(--down);font-weight:700}.hold{color:var(--soft);font-weight:700}
+  .reason{font-size:13px;color:var(--soft);margin:2px 0 4px}
+  .posrow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
+  .footer{margin-top:24px;font-family:var(--mono);font-size:11px;color:var(--soft);line-height:1.6}
+  #err{display:none;margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--down);background:#FBEDEA;border:1px solid var(--down);border-radius:6px;padding:8px 12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">ESPERIMENTO 01 · ALPACA PAPER</div>
+      <h1>Trading Lab</h1>
+    </div>
+    <div style="text-align:right">
+      <span id="mode" class="badge" style="background:var(--ink)">…</span>
+      <div id="market" class="eyebrow" style="margin-top:4px">…</div>
+    </div>
+  </header>
+
+  <div id="err"></div>
+
+  <div class="card">
+    <div class="lbl">EQUITY</div>
+    <span class="big" id="equity">—</span> <span class="ret" id="ret"></span>
+    <div class="meta">
+      <span>liquidità <b id="cash">—</b></span>
+      <span>rischio <b id="risk">—</b></span>
+      <span>stop globale <b id="stop">—</b></span>
+    </div>
+    <div style="height:190px;margin-top:12px"><canvas id="chart"></canvas></div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button id="refresh">Aggiorna</button>
+    <button id="halt" class="danger" style="margin-left:auto">⏹ Halt</button>
+    <button id="resume" class="ok" style="display:none">▶ Riprendi</button>
+  </div>
+
+  <div class="card">
+    <div class="lbl">POSIZIONI APERTE</div>
+    <div id="positions"></div>
+  </div>
+
+  <div style="margin-top:16px">
+    <div class="lbl">REGISTRO DELLE DECISIONI</div>
+    <div id="log"></div>
+  </div>
+
+  <div class="footer">
+    Conto paper Alpaca · stop-loss automatico per posizione · nessuna consulenza finanziaria · monitor ogni 60s, notizie ogni 5 min ·
+    le decisioni scattano su trigger di prezzo, notizie rilevanti o check-in programmati.
+  </div>
+</div>
+
+<script>
+const token = new URLSearchParams(location.search).get("token");
+const usd = n => new Intl.NumberFormat("it-IT",{style:"currency",currency:"USD"}).format(n);
+const pct = n => (n>=0?"+":"")+(n*100).toFixed(2)+"%";
+const dt = t => new Date(t).toLocaleString("it-IT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+let chart;
+
+async function load(){
+  const err = document.getElementById("err");
+  err.style.display = "none";
+  try {
+    const r = await fetch(`/api/state?token=${encodeURIComponent(token)}`);
+    if(!r.ok) throw new Error(await r.text());
+    const s = await r.json();
+
+    const eq = s.account.equity, base = s.account.baseline || eq;
+    document.getElementById("equity").textContent = usd(eq);
+    const ret = eq/base - 1;
+    const retEl = document.getElementById("ret");
+    retEl.textContent = pct(ret);
+    retEl.style.color = ret >= 0 ? "var(--up)" : "var(--down)";
+    document.getElementById("cash").textContent = usd(s.account.cash);
+    document.getElementById("risk").textContent = s.risk;
+    document.getElementById("stop").textContent = "-" + (s.config.stop*100) + "% dal picco";
+
+    const mode = document.getElementById("mode");
+    if (s.halted) { mode.textContent = "HALT"; mode.style.background = "var(--down)"; }
+    else if (!s.trading_enabled) { mode.textContent = "SOLO MONITOR"; mode.style.background = "var(--soft)"; }
+    else { mode.textContent = "ATTIVO · PAPER"; mode.style.background = "var(--ink)"; }
+    document.getElementById("market").textContent = s.market_open ? "mercato aperto" : "mercato chiuso";
+    document.getElementById("halt").style.display = s.halted ? "none" : "";
+    document.getElementById("resume").style.display = s.halted ? "" : "none";
+
+    // grafico
+    const labels = s.history.map(h => dt(h.ts));
+    const data = s.history.map(h => h.equity);
+    if (chart) chart.destroy();
+    chart = new Chart(document.getElementById("chart"), {
+      type: "line",
+      data: { labels, datasets: [{ data, borderColor: "#1F4FD8", borderWidth: 2, pointRadius: 0, tension: .2 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { maxTicksLimit: 5, font: { family: "ui-monospace", size: 10 } }, grid: { display: false } },
+          y: { ticks: { font: { family: "ui-monospace", size: 10 } }, grid: { color: "#E6EAEE" } }
+        }
+      }
+    });
+
+    // posizioni
+    const posEl = document.getElementById("positions");
+    posEl.innerHTML = s.positions.length ? "" : "<div style='color:var(--soft);font-size:14px'>Nessuna posizione aperta.</div>";
+    for (const p of s.positions) {
+      const upnl = Number(p.unrealized_pl);
+      posEl.innerHTML += `<div class="posrow"><span><b>${p.symbol}</b> · ${Number(p.qty).toFixed(4)} @ ${usd(Number(p.avg_entry_price))}</span><span style="color:${upnl>=0?'var(--up)':'var(--down)'}">${usd(upnl)}</span></div>`;
+    }
+
+    // registro
+    const log = document.getElementById("log");
+    log.innerHTML = s.decisions.length ? "" : "<div class='card' style='border-style:dashed;color:var(--soft);font-size:14px'>Registro vuoto: il sistema è in ascolto e interverrà al primo trigger.</div>";
+    for (const d of s.decisions) {
+      let ops = "";
+      for (const x of d.decisions || []) {
+        ops += `<div class="op"><span class="${x.action}">${x.action.toUpperCase()}</span> ${x.asset}${x.usd>0?` · ${usd(x.usd)}`:""}<div class="reason">${x.reasoning||""}</div></div>`;
+      }
+      const nExec = (d.orders?.executed||[]).length;
+      log.innerHTML += `<div class="entry"><div class="head"><span>${dt(d.ts)}</span><span>${nExec} ordini eseguiti</span></div><div class="view">${d.view||""}</div><div style="font-family:var(--mono);font-size:11px;color:var(--soft)">trigger: ${d.trigger}</div>${ops}</div>`;
+    }
+  } catch(e) {
+    err.textContent = "Errore: " + e.message;
+    err.style.display = "block";
+  }
+}
+
+document.getElementById("refresh").onclick = load;
+document.getElementById("halt").onclick = async () => {
+  if (!confirm("Fermare il trading? Il monitor resta attivo ma nessun ordine verrà eseguito.")) return;
+  await fetch(`/api/halt?token=${encodeURIComponent(token)}`, { method: "POST" }); load();
+};
+document.getElementById("resume").onclick = async () => {
+  await fetch(`/api/resume?token=${encodeURIComponent(token)}`, { method: "POST" }); load();
+};
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>

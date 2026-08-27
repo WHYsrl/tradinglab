@@ -1,0 +1,30 @@
+# Blueprint Render — Trading Lab
+# Piano a pagamento "starter" (~7 $/mese): necessario, il free tier va in sleep
+# e fermerebbe il monitor 24/7. Disco persistente per il DB SQLite dell'esperimento.
+services:
+  - type: web
+    name: trading-lab
+    runtime: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: DATA_DIR
+        value: /data
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ALPACA_KEY_ID
+        sync: false
+      - key: ALPACA_SECRET_KEY
+        sync: false
+      - key: DASH_TOKEN
+        sync: false
+      - key: RISK_PROFILE
+        value: bilanciato
+      - key: TRADING_ENABLED
+        value: "true"
