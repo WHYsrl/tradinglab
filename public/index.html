@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Trading Lab</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <style>
   :root {
     --paper:#EEF1F4; --card:#fff; --ink:#14181D; --soft:#5A6572; --line:#D6DCE2;
@@ -91,7 +90,50 @@ const token = new URLSearchParams(location.search).get("token");
 const usd = n => new Intl.NumberFormat("it-IT",{style:"currency",currency:"USD"}).format(n);
 const pct = n => (n>=0?"+":"")+(n*100).toFixed(2)+"%";
 const dt = t => new Date(t).toLocaleString("it-IT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
-let chart;
+let lastHistory = [];
+
+function drawChart(history){
+  lastHistory = history || [];
+  const canvas = document.getElementById("chart");
+  const box = canvas.parentElement;
+  const W = box.clientWidth, H = box.clientHeight;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + "px"; canvas.style.height = H + "px";
+  const g = canvas.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+  const pts = lastHistory.filter(h => h && h.equity != null);
+  g.font = "10px ui-monospace,Menlo,monospace";
+  if (pts.length < 2) {
+    g.fillStyle = "#5A6572";
+    g.fillText(pts.length ? "In attesa di piu dati..." : "Nessun dato ancora", 8, 20);
+    return;
+  }
+  const pad = { l: 8, r: 56, t: 10, b: 18 };
+  let min = Infinity, max = -Infinity;
+  for (const p of pts) { if (p.equity < min) min = p.equity; if (p.equity > max) max = p.equity; }
+  if (max - min < 1e-9) { max += 1; min -= 1; }
+  const span = max - min, t0 = pts[0].ts, t1 = pts[pts.length - 1].ts, tspan = Math.max(1, t1 - t0);
+  const X = ts => pad.l + ((ts - t0) / tspan) * (W - pad.l - pad.r);
+  const Y = v => pad.t + (1 - (v - min) / span) * (H - pad.t - pad.b);
+  g.strokeStyle = "#E6EAEE"; g.lineWidth = 1; g.fillStyle = "#5A6572";
+  for (const v of [min, (min + max) / 2, max]) {
+    const y = Y(v);
+    g.beginPath(); g.moveTo(pad.l, y); g.lineTo(W - pad.r, y); g.stroke();
+    g.fillText(Math.round(v).toLocaleString("it-IT"), W - pad.r + 6, y + 3);
+  }
+  g.beginPath();
+  pts.forEach((p, i) => { const x = X(p.ts), y = Y(p.equity); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+  g.strokeStyle = "#1F4FD8"; g.lineWidth = 2; g.lineJoin = "round"; g.stroke();
+  g.lineTo(X(t1), H - pad.b); g.lineTo(X(t0), H - pad.b); g.closePath();
+  g.fillStyle = "rgba(31,79,216,0.07)"; g.fill();
+  g.fillStyle = "#5A6572";
+  g.fillText(dt(t0), pad.l, H - 5);
+  const lbl = dt(t1);
+  g.fillText(lbl, W - pad.r - g.measureText(lbl).width, H - 5);
+}
+window.addEventListener("resize", () => { try { drawChart(lastHistory); } catch (e) {} });
 
 async function load(){
   const err = document.getElementById("err");
@@ -119,22 +161,8 @@ async function load(){
     document.getElementById("halt").style.display = s.halted ? "none" : "";
     document.getElementById("resume").style.display = s.halted ? "" : "none";
 
-    // grafico
-    const labels = s.history.map(h => dt(h.ts));
-    const data = s.history.map(h => h.equity);
-    if (chart) chart.destroy();
-    chart = new Chart(document.getElementById("chart"), {
-      type: "line",
-      data: { labels, datasets: [{ data, borderColor: "#1F4FD8", borderWidth: 2, pointRadius: 0, tension: .2 }] },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { maxTicksLimit: 5, font: { family: "ui-monospace", size: 10 } }, grid: { display: false } },
-          y: { ticks: { font: { family: "ui-monospace", size: 10 } }, grid: { color: "#E6EAEE" } }
-        }
-      }
-    });
+    // grafico (canvas nativo: nessuna dipendenza esterna; un problema qui non blocca il resto)
+    try { drawChart(s.history); } catch (e) { console.log("chart:", e.message); }
 
     // posizioni
     const posEl = document.getElementById("positions");
