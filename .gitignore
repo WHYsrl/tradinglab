@@ -3,3 +3,4 @@ data/
 *.sqlite
 *.sqlite-*
 .DS_Store
+_to_delete/
