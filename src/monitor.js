@@ -6,6 +6,7 @@ const risk = require("./risk");
 
 let tickCount = 0;
 let running = false;
+let warnedNoKeys = false;
 
 const nyTime = () => {
   const p = new Intl.DateTimeFormat("en-US", {
@@ -48,6 +49,14 @@ async function tick() {
   if (running) return; // mai due tick sovrapposti
   running = true;
   try {
+    // Senza chiavi Alpaca il sistema resta in attesa: si deploya anche prima di avere l'account
+    if (!process.env.ALPACA_KEY_ID || !process.env.ALPACA_SECRET_KEY) {
+      if (!warnedNoKeys) {
+        warnedNoKeys = true;
+        db.addEvent("waiting_keys", { msg: "Chiavi Alpaca non configurate: monitor in attesa" });
+      }
+      return;
+    }
     tickCount++;
     const [clock, account, positions, market] = await Promise.all([
       alpaca.clock(),

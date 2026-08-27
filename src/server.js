@@ -24,6 +24,9 @@ app.get("/", auth, (_req, res) => {
 });
 
 app.get("/api/state", auth, async (_req, res) => {
+  if (!process.env.ALPACA_KEY_ID || !process.env.ALPACA_SECRET_KEY) {
+    return res.status(503).send("In attesa delle chiavi Alpaca: aggiungi ALPACA_KEY_ID e ALPACA_SECRET_KEY nelle variabili d'ambiente su Render.");
+  }
   try {
     const [account, positions, clock] = await Promise.all([
       alpaca.account(),
