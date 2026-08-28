@@ -161,7 +161,7 @@ async function reviewOnce(monitor) {
 
     const prices = {};
     try {
-      const md = await alpaca.marketData(C.ASSETS, C.CRYPTO_ASSETS);
+      const md = await alpaca.marketData([...C.ASSETS, ...C.STOCKS], C.CRYPTO_ASSETS);
       Object.assign(prices, md.prices);
     } catch (_) {}
 

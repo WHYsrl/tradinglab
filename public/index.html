@@ -35,6 +35,7 @@
   .posrow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
   .footer{margin-top:24px;font-family:var(--mono);font-size:11px;color:var(--soft);line-height:1.6}
   .fld{font-family:var(--mono);font-size:11px;color:var(--soft);display:flex;flex-direction:column;gap:4px;letter-spacing:.05em}
+  input[type=text]{padding:9px 10px;border:1px solid var(--line);border-radius:6px;font-family:var(--sans);font-size:14px;background:var(--card);color:var(--ink)}
   select{padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:13px;background:var(--card);color:var(--ink)}
   #err{display:none;margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--down);background:#FBEDEA;border:1px solid var(--down);border-radius:6px;padding:8px 12px}
 </style>
@@ -88,6 +89,15 @@
       <button id="clearDerisk" class="danger" style="display:none">Annulla riduzione supervisore</button>
     </div>
     <div id="setMsg" style="font-family:var(--mono);font-size:11px;color:var(--soft);margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">CHIEDI AL MOTORE</div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="propText" placeholder="es. non e il caso di comprare Apple in vista del keynote?" style="flex:1">
+      <button id="propSend" class="ok">Invia</button>
+    </div>
+    <div id="propList"></div>
   </div>
 
   <div class="card">
@@ -226,6 +236,17 @@ async function load(){
     }
     document.getElementById("clearDerisk").style.display = s.settings && s.settings.risk_override ? "" : "none";
 
+    // proposte dell'utente e risposte del motore
+    const esc = (t) => String(t || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    const plEl = document.getElementById("propList");
+    plEl.innerHTML = "";
+    for (const p0 of s.suggestions || []) {
+      const ans = p0.status === "answered"
+        ? esc(p0.answer)
+        : "in valutazione alla prossima sessione del motore (~1 minuto)";
+      plEl.innerHTML += `<div class="op" style="padding:8px 0;border-bottom:1px solid var(--line)"><span style="color:var(--soft)">${dt(p0.ts)}</span> · <b>${esc(p0.text)}</b><div class="reason">${ans}</div></div>`;
+    }
+
     // supervisione: le review periodiche di Fable
     const rvEl = document.getElementById("reviews");
     const flagColor = { ok: "var(--up)", warning: "#B7791F", critical: "var(--down)" };
@@ -268,6 +289,15 @@ async function load(){
   }
 }
 
+document.getElementById("propSend").onclick = async () => {
+  const el = document.getElementById("propText");
+  const text = el.value.trim();
+  if (!text) return;
+  const r = await fetch(`/api/suggest?token=${encodeURIComponent(token)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+  if (r.ok) el.value = "";
+  load();
+};
+document.getElementById("propText").addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("propSend").click(); });
 document.getElementById("saveSettings").onclick = async () => {
   const body = {
     risk_profile: document.getElementById("set_profile").value,

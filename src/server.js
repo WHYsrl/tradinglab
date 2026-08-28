@@ -63,6 +63,7 @@ app.get("/api/state", auth, async (_req, res) => {
         orders: JSON.parse(d.orders),
       })),
       events: db.lastEvents(30),
+      suggestions: db.lastSuggestions(5),
       reviews: db.lastReviews(6).map((r) => { try { return { ...r, actions: JSON.parse(r.actions) }; } catch (_) { return r; } }),
       news: db.recentNews(12),
       config: { assets: C.ASSETS, stop: C.GLOBAL_STOP_DRAWDOWN },
@@ -70,6 +71,15 @@ app.get("/api/state", auth, async (_req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// Proposte dell'utente: entrano nella prossima sessione decisionale del motore
+app.post("/api/suggest", auth, (req, res) => {
+  const text = String((req.body || {}).text || "").trim().slice(0, 500);
+  if (!text) return res.status(400).send("testo vuoto");
+  db.addSuggestion(text);
+  db.addEvent("user_suggestion", { text });
+  res.json({ ok: true });
 });
 
 // Impostazioni dalla dashboard: salvate nel DB persistente, effetto immediato

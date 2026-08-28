@@ -31,7 +31,7 @@ function buildPrompt(ctx) {
     : "- nessuna notizia rilevante nelle ultime ore";
 
   return `Sei il motore decisionale di un ESPERIMENTO di trading su conto PAPER (nessun denaro reale).
-Universo: ETF internazionali — ${C.ASSET_DESC} — e crypto — ${C.CRYPTO_DESC}.
+Universo: ETF internazionali — ${C.ASSET_DESC} —, azioni USA — ${C.STOCK_DESC} — e crypto — ${C.CRYPTO_DESC}.
 
 MOTIVO DI QUESTA SESSIONE: ${ctx.trigger}
 ${ctx.etfSession === "extended" ? "\nBORSA USA IN SESSIONE ESTESA (pre-market/after-hours/overnight): gli ordini ETF verranno piazzati come limit; liquidità ridotta e spread più ampi — opera sugli ETF solo con segnale forte." : ""}${ctx.etfSession === "closed" ? "\nWEEKEND: borsa USA chiusa, sono eseguibili solo ordini crypto; per gli ETF usa hold." : ""}
@@ -50,13 +50,14 @@ PORTAFOGLIO:
 ULTIME DECISIONI E COME SONO ANDATE: ${ctx.lastDecisionsSummary || "nessuna"}
 ${ctx.supervisorNote ? "\nINDICAZIONE DEL SUPERVISORE (review periodica indipendente): " + ctx.supervisorNote : ""}
 ${ctx.stopLossNote ? "\nATTENZIONE: " + ctx.stopLossNote + "\n" : ""}
+${ctx.userProposals ? "\nPROPOSTE DELL'UTENTE (valutale esplicitamente e rispondi nel campo user_reply; segui il tuo giudizio, non sei obbligato ad assecondarle; puoi operare SOLO sugli asset dell'universo — se riguardano altro, spiegalo):\n" + ctx.userProposals + "\n" : ""}
 NOTIZIE RECENTI:
 ${newsList}
 
 Valuta il quadro e decidi. L'orizzonte è tattico (ore/giorni), non scalping. Operare non è obbligatorio: se il segnale è debole, hold è la scelta corretta — l'iperattività distrugge rendimento. Usa gli esiti delle decisioni passate riportati sopra per correggere la rotta.
 
 Rispondi SOLO con JSON valido, nessun testo prima o dopo:
-{"view":"quadro di mercato in 1-2 frasi","decisions":[{"asset":"SPY","action":"buy|sell|hold","usd":0,"reasoning":"motivazione breve"}]}
+{"view":"quadro di mercato in 1-2 frasi","user_reply":"solo se ci sono proposte dell'utente: la tua risposta diretta e motivata","decisions":[{"asset":"SPY","action":"buy|sell|hold","usd":0,"reasoning":"motivazione breve"}]}
 "usd" è il controvalore dell'operazione (0 se hold). I simboli crypto vanno scritti esattamente "BTC/USD" o "ETH/USD". Rispetta i limiti del profilo di rischio.`;
 }
 

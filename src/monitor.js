@@ -9,7 +9,8 @@ let tickCount = 0;
 let running = false;
 let warnedNoKeys = false;
 
-const ALL_ASSETS = [...C.ASSETS, ...C.CRYPTO_ASSETS];
+const EQUITY_ASSETS = [...C.ASSETS, ...C.STOCKS];
+const ALL_ASSETS = [...EQUITY_ASSETS, ...C.CRYPTO_ASSETS];
 
 const nyTime = () => {
   const p = new Intl.DateTimeFormat("en-US", {
@@ -84,7 +85,7 @@ async function tick() {
       alpaca.clock(),
       alpaca.account(),
       alpaca.positions(),
-      alpaca.marketData(C.ASSETS, C.CRYPTO_ASSETS),
+      alpaca.marketData(EQUITY_ASSETS, C.CRYPTO_ASSETS),
     ]);
     const prices = market.prices;
     const equity = Number(account.equity);
@@ -139,7 +140,7 @@ async function tick() {
     if (tickCount % C.NEWS_EVERY_TICKS === 1) {
       const since = db.kvGet("news_since", Date.now() - 12 * 3600 * 1000);
       try {
-        const items = await alpaca.news([...C.ASSETS, ...C.CRYPTO_NEWS_SYMBOLS], since);
+        const items = await alpaca.news([...EQUITY_ASSETS, ...C.CRYPTO_NEWS_SYMBOLS], since);
         freshNews = db.addNews(items);
         db.kvSet("news_since", Date.now() - 5 * 60 * 1000);
       } catch (e) {
@@ -169,6 +170,7 @@ async function tick() {
     // ETF: trigger di prezzo in orario regolare E nelle sessioni estese (24/5)
     if (etfSession !== "closed") {
       for (const a of C.ASSETS) priceTrigger(a, prof.priceTriggerPct);
+      for (const a of C.STOCKS) priceTrigger(a, prof.priceTriggerPct * C.STOCK_TRIGGER_MULT);
     }
 
     if (clock.is_open) {
@@ -198,17 +200,27 @@ async function tick() {
       }
     }
 
+    // Proposte dell'utente dalla dashboard: valutate alla prima sessione utile
+    const pendingProps = db.pendingSuggestions();
+    for (const pr of pendingProps) {
+      triggers.push({ type: "user", desc: `proposta dell'utente: "${String(pr.text).slice(0, 200)}"`, emergency: false });
+    }
+
     // ————— Decisione —————
     if (triggers.length === 0) return;
     if (!tradingOn) {
       db.addEvent("trigger_ignored", { triggers, reason: "trading disabilitato o in halt" });
       db.kvSet("last_decision_prices", prices); // il riferimento avanza: lo stesso trigger non rilogga ogni 60s
+      if (pendingProps.length) {
+        db.answerSuggestions(pendingProps.map((x) => x.ts), "Trading disattivato o in halt: proposta registrata ma il motore non e operativo.");
+      }
       return;
     }
     const lastTs = db.kvGet("last_decision_ts", 0);
     const cooldownOk = Date.now() - lastTs >= C.DECISION_COOLDOWN_MIN * 60 * 1000;
     const emergency = triggers.some((x) => x.emergency);
-    if (!cooldownOk && !emergency) return;
+    const userAsk = triggers.some((x) => x.type === "user");
+    if (!cooldownOk && !emergency && !userAsk) return;
 
     const orderCountKey = `orders:${today()}`;
     const usedOrders = db.kvGet(orderCountKey, 0);
@@ -260,6 +272,7 @@ async function tick() {
         return n && Date.now() - n.ts < 24 * 3600 * 1000 ? n.text : "";
       })(),
       stopLossNote,
+      userProposals: pendingProps.map((x) => "- " + x.text).join("\n"),
       remainingOrders: C.MAX_ORDERS_PER_DAY - usedOrders,
     };
 
@@ -294,6 +307,9 @@ async function tick() {
     }
 
     db.addDecision(triggerDesc, parsed.view, parsed.decisions, { executed, rejected }, raw);
+    if (pendingProps.length) {
+      db.answerSuggestions(pendingProps.map((x) => x.ts), parsed.user_reply || parsed.view || "valutata");
+    }
     db.kvSet("last_decision_ts", Date.now());
     db.kvSet("last_decision_prices", prices);
   } catch (e) {

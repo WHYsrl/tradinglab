@@ -6,6 +6,12 @@ module.exports = {
   ASSET_DESC:
     "SPY (S&P 500 USA), QQQ (Nasdaq 100), EZU (Eurozona), EWJ (Giappone), EEM (mercati emergenti), GLD (oro)",
 
+  // Azioni USA singole (mega-cap liquide; soglie trigger più larghe: più volatili degli indici)
+  STOCKS: ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "JPM", "XOM"],
+  STOCK_DESC:
+    "AAPL (Apple), MSFT (Microsoft), NVDA (Nvidia), GOOGL (Alphabet), AMZN (Amazon), META (Meta), TSLA (Tesla), AVGO (Broadcom), JPM (JPMorgan), XOM (Exxon)",
+  STOCK_TRIGGER_MULT: 1.5, // soglia trigger azioni = priceTriggerPct * questo fattore
+
   // Universo crypto: negoziabile 24/7 su Alpaca (nelle posizioni compare senza slash: BTCUSD)
   CRYPTO_ASSETS: ["BTC/USD", "ETH/USD"],
   CRYPTO_DESC: "BTC/USD (Bitcoin), ETH/USD (Ethereum) — negoziabili 24/7",

@@ -27,6 +27,9 @@ CREATE TABLE IF NOT EXISTS news (
 CREATE TABLE IF NOT EXISTS reviews (
   ts INTEGER PRIMARY KEY, skipped INTEGER, flag TEXT, assessment TEXT, actions TEXT, raw TEXT
 );
+CREATE TABLE IF NOT EXISTS suggestions (
+  ts INTEGER PRIMARY KEY, text TEXT, status TEXT, answer TEXT, answered_ts INTEGER
+);
 `);
 
 module.exports = {
@@ -82,6 +85,19 @@ module.exports = {
     return db
       .prepare("SELECT * FROM events WHERE type=? AND ts>? ORDER BY ts DESC")
       .all(type, Date.now() - hours * 3600 * 1000);
+  },
+  addSuggestion(text) {
+    db.prepare("INSERT INTO suggestions (ts, text, status) VALUES (?,?,?)").run(Date.now(), text, "pending");
+  },
+  pendingSuggestions() {
+    return db.prepare("SELECT * FROM suggestions WHERE status='pending' ORDER BY ts").all();
+  },
+  answerSuggestions(tsList, answer) {
+    const up = db.prepare("UPDATE suggestions SET status='answered', answer=?, answered_ts=? WHERE ts=?");
+    for (const t of tsList) up.run(answer, Date.now(), t);
+  },
+  lastSuggestions(n = 5) {
+    return db.prepare("SELECT * FROM suggestions ORDER BY ts DESC LIMIT ?").all(n);
   },
   addReview(skipped, flag, assessment, actions, raw) {
     db.prepare("INSERT OR REPLACE INTO reviews VALUES (?,?,?,?,?,?)").run(

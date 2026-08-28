@@ -1,6 +1,6 @@
 # Trading Lab — esperimento di trading AI event-driven
 
-Sistema autonomo che monitora prezzi e notizie sui mercati internazionali (ETF USA: SPY, QQQ, EZU, EWJ, EEM, GLD) e sulle crypto (BTC/USD, ETH/USD, negoziabili 24/7), e chiama Claude come motore decisionale **solo quando succede qualcosa**: movimento di prezzo oltre soglia, notizia rilevante, o check-in programmati (apertura, metà seduta, pre-chiusura). Gli ordini vengono eseguiti su conto **Alpaca paper** (denaro virtuale) e passano da un risk layer deterministico che l'AI non può scavalcare.
+Sistema autonomo che monitora prezzi e notizie su ETF internazionali (SPY, QQQ, EZU, EWJ, EEM, GLD), azioni USA mega-cap (AAPL, MSFT, NVDA, GOOGL, AMZN, META, TSLA, AVGO, JPM, XOM) e crypto (BTC/USD, ETH/USD, 24/7), e chiama Claude come motore decisionale **solo quando succede qualcosa**: movimento di prezzo oltre soglia, notizia rilevante, o check-in programmati (apertura, metà seduta, pre-chiusura). Gli ordini vengono eseguiti su conto **Alpaca paper** (denaro virtuale) e passano da un risk layer deterministico che l'AI non può scavalcare.
 
 ## Architettura
 
@@ -42,6 +42,10 @@ Costo indicativo: istanza Starter ~7 $/mese + disco ~0,25 $/mese + consumo API A
 - **ETF 24/5**: fuori dall'orario regolare (pre-market, after-hours e sessione overnight, da domenica sera a venerdì sera ora di New York) gli ordini ETF vengono piazzati come limit con `extended_hours` e un piccolo buffer di prezzo (0,2%); liquidità ridotta, il modello ne è avvisato. Nel weekend restano negoziabili solo le crypto. I limit non eseguiti vengono cancellati all'inizio della sessione decisionale successiva.
 - **Supervisore Fable**: può solo ridurre il rischio, mai aumentarlo; la ripresa da un halt resta manuale. Modello e cadenza configurabili via `SUPERVISOR_MODEL` / `SUPERVISOR_EVERY_MIN`.
 - Il risk layer taglia qualunque ordine oltre i limiti del profilo, qualunque cosa dica il modello.
+
+## Proposte dell'utente
+
+Dalla dashboard (card "Chiedi al motore") puoi proporre operazioni o fare domande ("non è il caso di comprare Apple in vista del keynote?"). La proposta fa partire una sessione decisionale alla prima occasione utile (scavalca il cooldown, non i limiti di rischio): il motore la valuta esplicitamente, risponde nella dashboard e decide in autonomia — non è obbligato ad assecondarla, e il risk layer si applica comunque.
 
 ## Metodo sperimentale suggerito
 
