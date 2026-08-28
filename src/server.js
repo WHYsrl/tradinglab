@@ -41,6 +41,7 @@ app.get("/api/state", auth, async (_req, res) => {
         peak: db.kvGet("equity_peak"),
       },
       market_open: clock.is_open,
+      etf_session: monitor.etfSessionNow(clock),
       halted: db.kvGet("halted"),
       trading_enabled: process.env.TRADING_ENABLED === "true",
       risk: process.env.RISK_PROFILE || "bilanciato",

@@ -300,4 +300,4 @@ function start() {
   setInterval(tick, C.TICK_SECONDS * 1000);
 }
 
-module.exports = { start };
+module.exports = { start, etfSessionNow };

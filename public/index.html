@@ -79,6 +79,11 @@
     <div id="log"></div>
   </div>
 
+  <div style="margin-top:16px">
+    <div class="lbl">ATTIVIT&Agrave; RECENTE</div>
+    <div id="events" class="card" style="padding:8px 14px"></div>
+  </div>
+
   <div class="footer">
     Conto paper Alpaca · stop-loss automatico per posizione · nessuna consulenza finanziaria · ETF 24/5 (limit fuori orario regolare), crypto 24/7 · monitor ogni 60s, notizie ogni 5 min ·
     le decisioni scattano su trigger di prezzo, notizie rilevanti o check-in programmati.
@@ -157,7 +162,8 @@ async function load(){
     if (s.halted) { mode.textContent = "HALT"; mode.style.background = "var(--down)"; }
     else if (!s.trading_enabled) { mode.textContent = "SOLO MONITOR"; mode.style.background = "var(--soft)"; }
     else { mode.textContent = "ATTIVO · PAPER"; mode.style.background = "var(--ink)"; }
-    document.getElementById("market").textContent = s.market_open ? "mercato aperto" : "mercato chiuso";
+    const sess = { regular: "borsa aperta", extended: "sessione estesa · ETF in limit", closed: "weekend · solo crypto" };
+    document.getElementById("market").textContent = sess[s.etf_session] || (s.market_open ? "borsa aperta" : "borsa chiusa");
     document.getElementById("halt").style.display = s.halted ? "none" : "";
     document.getElementById("resume").style.display = s.halted ? "" : "none";
 
@@ -182,6 +188,20 @@ async function load(){
       }
       const nExec = (d.orders?.executed||[]).length;
       log.innerHTML += `<div class="entry"><div class="head"><span>${dt(d.ts)}</span><span>${nExec} ordini eseguiti</span></div><div class="view">${d.view||""}</div><div style="font-family:var(--mono);font-size:11px;color:var(--soft)">trigger: ${d.trigger}</div>${ops}</div>`;
+    }
+    // attività recente: il battito del sistema anche quando non decide
+    const evEl = document.getElementById("events");
+    const evLabel = { boot: "avvio", session_start: "sessione decisionale", trigger_ignored: "trigger osservato (non operativo)", stop_loss: "STOP-LOSS", halt: "HALT", resume: "ripresa", error: "errore", waiting_keys: "in attesa delle chiavi Alpaca" };
+    const evs = (s.events || []).slice(0, 8);
+    evEl.innerHTML = evs.length ? "" : "<span style=\'color:var(--soft);font-size:13px\'>Nessun evento nelle ultime ore.</span>";
+    for (const e of evs) {
+      let info = "";
+      try {
+        const d0 = JSON.parse(e.data);
+        if (d0.triggers) info = d0.triggers.map(t => t.desc).join("; ") + (d0.reason ? " — " + d0.reason : "");
+        else info = d0.trigger || d0.reason || d0.msg || d0.symbol || "";
+      } catch (_) {}
+      evEl.innerHTML += `<div class="op" style="padding:6px 0;border-bottom:1px solid var(--line)"><span style="color:var(--soft)">${dt(e.ts)}</span> · <b>${evLabel[e.type] || e.type}</b>${info ? ` <span class="reason" style="display:inline">· ${info}</span>` : ""}</div>`;
     }
   } catch(e) {
     err.textContent = "Errore: " + e.message;
