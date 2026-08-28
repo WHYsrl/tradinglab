@@ -7,39 +7,62 @@
 <style>
   :root {
     --paper:#EEF1F4; --card:#fff; --ink:#14181D; --soft:#5A6572; --line:#D6DCE2;
-    --cobalt:#1F4FD8; --up:#0E7A4D; --down:#C03325;
+    --cobalt:#1F4FD8; --up:#0E7A4D; --down:#C03325; --warn:#B7791F;
     --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
     --sans:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   }
   *{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);padding:16px 14px 60px}
   .wrap{max-width:760px;margin:0 auto}
-  header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:10px}
+  header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:10px;gap:10px}
   .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--soft)}
   h1{margin:4px 0 0;font-size:24px;font-weight:800}
-  .badge{font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:4px;color:#fff}
+  .badge{font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:4px;color:#fff;white-space:nowrap}
   .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:14px}
-  .big{font-family:var(--mono);font-size:34px;font-weight:700}
+  .big{font-family:var(--mono);font-size:32px;font-weight:700}
   .ret{font-family:var(--mono);font-size:16px;font-weight:700}
-  .meta{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--soft);margin-top:8px}
+  .meta{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--soft);margin-top:8px}
   .meta b{color:var(--ink)}
   .lbl{font-family:var(--mono);font-size:11px;color:var(--soft);letter-spacing:.1em;margin-bottom:6px}
   button{font-family:var(--mono);font-size:13px;padding:10px 14px;border-radius:6px;border:1px solid var(--line);background:var(--card);cursor:pointer}
   button.danger{color:var(--down);border-color:var(--down)}
   button.ok{color:#fff;background:var(--up);border-color:var(--up)}
+  input[type=text]{padding:9px 10px;border:1px solid var(--line);border-radius:6px;font-family:var(--sans);font-size:14px;background:var(--card);color:var(--ink)}
+  select{padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:13px;background:var(--card);color:var(--ink)}
+  .fld{font-family:var(--mono);font-size:11px;color:var(--soft);display:flex;flex-direction:column;gap:4px;letter-spacing:.05em}
+  .chip{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:14px;padding:4px 10px;background:var(--card);display:inline-flex;align-items:center;gap:5px}
+  .chip a{color:var(--down);cursor:pointer;font-weight:700}
+  .pgrid{display:grid;grid-template-columns:minmax(90px,1.2fr) 1fr 1fr 1fr 0.8fr;gap:2px 10px;font-family:var(--mono);font-size:13px;align-items:baseline}
+  .pgrid .h{font-size:10px;color:var(--soft);letter-spacing:.08em;padding-bottom:4px;border-bottom:1px solid var(--line)}
+  .pgrid .c{padding:7px 0;border-bottom:1px solid var(--line)}
+  .pgrid .num{text-align:right}
+  .pgrid .tot{border-bottom:none;font-weight:700;padding-top:9px}
+  .qty{font-size:10px;color:var(--soft)}
   .entry{border-left:3px solid var(--cobalt);background:var(--card);border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:10px}
-  .entry .head{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--soft)}
+  .entry .head{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--soft);gap:8px}
   .entry .view{font-style:italic;font-size:14px;margin:6px 0}
   .op{font-family:var(--mono);font-size:12px;padding:3px 0}
   .buy{color:var(--up);font-weight:700}.sell{color:var(--down);font-weight:700}.hold{color:var(--soft);font-weight:700}
   .reason{font-size:13px;color:var(--soft);margin:2px 0 4px}
-  .posrow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
-  .footer{margin-top:24px;font-family:var(--mono);font-size:11px;color:var(--soft);line-height:1.6}
-  .fld{font-family:var(--mono);font-size:11px;color:var(--soft);display:flex;flex-direction:column;gap:4px;letter-spacing:.05em}
-  input[type=text]{padding:9px 10px;border:1px solid var(--line);border-radius:6px;font-family:var(--sans);font-size:14px;background:var(--card);color:var(--ink)}
-  .chip{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:14px;padding:4px 10px;background:var(--card);display:inline-flex;align-items:center;gap:5px}
-  .chip a{color:var(--down);cursor:pointer;font-weight:700}
-  select{padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:13px;background:var(--card);color:var(--ink)}
+  details{border:1px solid var(--line);border-radius:8px;background:var(--card);margin-top:8px}
+  details summary{cursor:pointer;padding:11px 14px;font-family:var(--mono);font-size:12px;list-style:none;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  details summary::-webkit-details-marker{display:none}
+  details summary::after{content:"+";color:var(--soft);font-weight:700}
+  details[open] summary::after{content:"–"}
+  details .body{padding:0 14px 12px;border-top:1px solid var(--line);padding-top:10px}
+  details.inner{border-left:3px solid var(--line)}
+  details.inner.flag-ok{border-left-color:var(--up)}
+  details.inner.flag-warning{border-left-color:var(--warn)}
+  details.inner.flag-critical{border-left-color:var(--down)}
+  .sumtxt{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .sumtime{color:var(--soft);white-space:nowrap}
   #err{display:none;margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--down);background:#FBEDEA;border:1px solid var(--down);border-radius:6px;padding:8px 12px}
+  .footer{margin-top:24px;font-family:var(--mono);font-size:11px;color:var(--soft);line-height:1.6}
+  @media (max-width:480px){
+    .big{font-size:26px}
+    .pgrid{grid-template-columns:minmax(70px,1fr) 1fr 1fr;font-size:12px}
+    .pgrid .hide-m{display:none}
+    button{padding:10px 12px}
+  }
 </style>
 </head>
 <body>
@@ -62,10 +85,16 @@
     <span class="big" id="equity">—</span> <span class="ret" id="ret"></span>
     <div class="meta">
       <span>liquidità <b id="cash">—</b></span>
+      <span>investito <b id="invested">—</b></span>
       <span>rischio <b id="risk">—</b></span>
-      <span>stop globale <b id="stop">—</b></span>
+      <span>stop <b id="stop">—</b></span>
     </div>
-    <div style="height:190px;margin-top:12px"><canvas id="chart"></canvas></div>
+    <div style="height:170px;margin-top:12px"><canvas id="chart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">POSIZIONI</div>
+    <div id="positions"></div>
   </div>
 
   <div style="display:flex;gap:8px;margin-top:12px">
@@ -74,71 +103,75 @@
     <button id="resume" class="ok" style="display:none">▶ Riprendi</button>
   </div>
 
-  <div class="card">
-    <div class="lbl">IMPOSTAZIONI</div>
-    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
-      <label class="fld">PROFILO DI RISCHIO
-        <select id="set_profile"><option>prudente</option><option>bilanciato</option><option>aggressivo</option></select></label>
-      <label class="fld">TRADING
-        <select id="set_trading"><option value="true">attivo</option><option value="false">solo monitor</option></select></label>
-      <label class="fld">MOTORE
-        <select id="set_model"><option>claude-opus-5</option><option>claude-sonnet-5</option><option>claude-fable-5</option></select></label>
-      <label class="fld">SUPERVISORE
-        <select id="set_smodel"><option>claude-fable-5</option><option>claude-opus-5</option><option>claude-sonnet-5</option></select></label>
-      <label class="fld">REVIEW OGNI
-        <select id="set_smin"><option value="15">15 min</option><option value="30">30 min</option><option value="60">1 ora</option><option value="120">2 ore</option></select></label>
-      <button id="saveSettings" class="ok">Salva</button>
-      <button id="clearDerisk" class="danger" style="display:none">Annulla riduzione supervisore</button>
-    </div>
-    <div class="lbl" style="margin-top:16px">BACINO AZIONI (ETF e crypto restano fissi)</div>
-    <div id="stockChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
-    <div style="display:flex;gap:8px">
-      <input type="text" id="stockAdd" placeholder="ticker, es. PLTR" style="width:150px;text-transform:uppercase">
-      <button id="stockAddBtn">Aggiungi</button>
-    </div>
-    <div id="setMsg" style="font-family:var(--mono);font-size:11px;color:var(--soft);margin-top:8px"></div>
+  <div style="margin-top:16px">
+    <div class="lbl">ULTIMA SESSIONE DEL MOTORE</div>
+    <div id="lastSession"></div>
   </div>
 
   <div class="card">
     <div class="lbl">CHIEDI AL MOTORE</div>
     <div style="display:flex;gap:8px">
-      <input type="text" id="propText" placeholder="es. non e il caso di comprare Apple in vista del keynote?" style="flex:1">
+      <input type="text" id="propText" placeholder="proponi un'operazione o fai una domanda" style="flex:1">
       <button id="propSend" class="ok">Invia</button>
     </div>
     <div id="propList"></div>
   </div>
 
-  <div class="card">
-    <div class="lbl">POSIZIONI APERTE</div>
-    <div id="positions"></div>
-  </div>
-
-  <div style="margin-top:16px">
-    <div class="lbl">REGISTRO DELLE DECISIONI</div>
-    <div id="log"></div>
-  </div>
-
-  <div style="margin-top:16px">
-    <div class="lbl">SUPERVISIONE &middot; FABLE</div>
-    <div id="reviews"></div>
-  </div>
-
-  <div style="margin-top:16px">
-    <div class="lbl">ATTIVIT&Agrave; RECENTE</div>
-    <div id="events" class="card" style="padding:8px 14px"></div>
+  <div style="margin-top:18px">
+    <div class="lbl">ARCHIVIO</div>
+    <details id="arch-dec">
+      <summary><span class="sumtxt">Decisioni del motore</span><span class="sumtime" id="cnt-dec"></span></summary>
+      <div class="body" id="log"></div>
+    </details>
+    <details id="arch-rev">
+      <summary><span class="sumtxt">Supervisione · Fable</span><span class="sumtime" id="cnt-rev"></span></summary>
+      <div class="body" id="reviews"></div>
+    </details>
+    <details id="arch-ev">
+      <summary><span class="sumtxt">Attività di sistema</span><span class="sumtime" id="cnt-ev"></span></summary>
+      <div class="body" id="events"></div>
+    </details>
+    <details id="arch-set">
+      <summary><span class="sumtxt">Impostazioni</span><span class="sumtime" id="cur-set"></span></summary>
+      <div class="body">
+        <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+          <label class="fld">PROFILO DI RISCHIO
+            <select id="set_profile"><option>prudente</option><option>bilanciato</option><option>aggressivo</option></select></label>
+          <label class="fld">TRADING
+            <select id="set_trading"><option value="true">attivo</option><option value="false">solo monitor</option></select></label>
+          <label class="fld">MOTORE
+            <select id="set_model"><option>claude-opus-5</option><option>claude-sonnet-5</option><option>claude-fable-5</option></select></label>
+          <label class="fld">SUPERVISORE
+            <select id="set_smodel"><option>claude-fable-5</option><option>claude-opus-5</option><option>claude-sonnet-5</option></select></label>
+          <label class="fld">REVIEW OGNI
+            <select id="set_smin"><option value="15">15 min</option><option value="30">30 min</option><option value="60">1 ora</option><option value="120">2 ore</option></select></label>
+          <button id="saveSettings" class="ok">Salva</button>
+          <button id="clearDerisk" class="danger" style="display:none">Annulla riduzione supervisore</button>
+        </div>
+        <div class="lbl" style="margin-top:16px">BACINO AZIONI (ETF e crypto restano fissi)</div>
+        <div id="stockChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="stockAdd" placeholder="ticker, es. PLTR" style="width:150px;text-transform:uppercase">
+          <button id="stockAddBtn">Aggiungi</button>
+        </div>
+        <div id="setMsg" style="font-family:var(--mono);font-size:11px;color:var(--soft);margin-top:8px"></div>
+      </div>
+    </details>
   </div>
 
   <div class="footer">
-    Conto paper Alpaca · stop-loss automatico per posizione · nessuna consulenza finanziaria · ETF 24/5 (limit fuori orario regolare), crypto 24/7 · monitor ogni 60s, notizie ogni 5 min, review Fable ogni 30 min ·
-    le decisioni scattano su trigger di prezzo, notizie rilevanti o check-in programmati.
+    Conto paper Alpaca · stop-loss automatico per posizione · nessuna consulenza finanziaria ·
+    ETF 24/5 (limit fuori orario regolare), crypto 24/7 · monitor ogni 60s, notizie ogni 5 min ·
+    le decisioni scattano su trigger di prezzo, notizie, check-in programmati o tue proposte.
   </div>
 </div>
-
 <script>
 const token = new URLSearchParams(location.search).get("token");
 const usd = n => new Intl.NumberFormat("it-IT",{style:"currency",currency:"USD"}).format(n);
+const usdS = n => (n>=0?"+":"-")+usd(Math.abs(n));
 const pct = n => (n>=0?"+":"")+(n*100).toFixed(2)+"%";
 const dt = t => new Date(t).toLocaleString("it-IT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+const esc = t => String(t||"").replace(/&/g,"&amp;").replace(/</g,"&lt;");
 let lastHistory = [];
 
 function drawChart(history){
@@ -154,11 +187,7 @@ function drawChart(history){
   g.clearRect(0, 0, W, H);
   const pts = lastHistory.filter(h => h && h.equity != null);
   g.font = "10px ui-monospace,Menlo,monospace";
-  if (pts.length < 2) {
-    g.fillStyle = "#5A6572";
-    g.fillText(pts.length ? "In attesa di piu dati..." : "Nessun dato ancora", 8, 20);
-    return;
-  }
+  if (pts.length < 2) { g.fillStyle = "#5A6572"; g.fillText(pts.length ? "In attesa di piu dati..." : "Nessun dato ancora", 8, 20); return; }
   const pad = { l: 8, r: 56, t: 10, b: 18 };
   let min = Infinity, max = -Infinity;
   for (const p of pts) { if (p.equity < min) min = p.equity; if (p.equity > max) max = p.equity; }
@@ -184,6 +213,18 @@ function drawChart(history){
 }
 window.addEventListener("resize", () => { try { drawChart(lastHistory); } catch (e) {} });
 
+function decisionHTML(d){
+  let ops = "";
+  for (const x of d.decisions || []) {
+    ops += `<div class="op"><span class="${esc(x.action)}">${esc((x.action||"").toUpperCase())}</span> ${esc(x.asset)}${x.usd>0?` · ${usd(x.usd)}`:""}<div class="reason">${esc(x.reasoning)}</div></div>`;
+  }
+  let rej = "";
+  for (const r of (d.orders && d.orders.rejected) || []) {
+    rej += `<div class="op" style="opacity:.65"><span class="hold">RESPINTO</span> ${esc(r.asset)}<div class="reason">${esc(r.why)}</div></div>`;
+  }
+  return `<div class="view">${esc(d.view)}</div><div style="font-family:var(--mono);font-size:11px;color:var(--soft);margin-bottom:4px">trigger: ${esc(d.trigger)}</div>${ops}${rej}`;
+}
+
 async function load(){
   const err = document.getElementById("err");
   err.style.display = "none";
@@ -191,6 +232,7 @@ async function load(){
     const r = await fetch(`/api/state?token=${encodeURIComponent(token)}`);
     if(!r.ok) throw new Error(await r.text());
     const s = await r.json();
+    const openIds = [...document.querySelectorAll("details[open]")].map(d0 => d0.id).filter(Boolean);
 
     const eq = s.account.equity, base = s.account.baseline || eq;
     document.getElementById("equity").textContent = usd(eq);
@@ -199,7 +241,8 @@ async function load(){
     retEl.textContent = pct(ret);
     retEl.style.color = ret >= 0 ? "var(--up)" : "var(--down)";
     document.getElementById("cash").textContent = usd(s.account.cash);
-    document.getElementById("risk").textContent = s.risk + (s.risk_base && s.risk !== s.risk_base ? " (ridotto, base " + s.risk_base + ")" : "");
+    document.getElementById("invested").textContent = usd(eq - s.account.cash);
+    document.getElementById("risk").textContent = s.risk + (s.risk_base && s.risk !== s.risk_base ? " (ridotto)" : "");
     document.getElementById("stop").textContent = "-" + (s.config.stop*100) + "% dal picco";
 
     const mode = document.getElementById("mode");
@@ -211,29 +254,90 @@ async function load(){
     document.getElementById("halt").style.display = s.halted ? "none" : "";
     document.getElementById("resume").style.display = s.halted ? "" : "none";
 
-    // grafico (canvas nativo: nessuna dipendenza esterna; un problema qui non blocca il resto)
-    try { drawChart(s.history); } catch (e) { console.log("chart:", e.message); }
+    try { drawChart(s.history); } catch (e) {}
 
-    // posizioni
     const posEl = document.getElementById("positions");
-    posEl.innerHTML = s.positions.length ? "" : "<div style='color:var(--soft);font-size:14px'>Nessuna posizione aperta.</div>";
-    for (const p of s.positions) {
-      const upnl = Number(p.unrealized_pl);
-      posEl.innerHTML += `<div class="posrow"><span><b>${p.symbol}</b> · ${Number(p.qty).toFixed(4)} @ ${usd(Number(p.avg_entry_price))}</span><span style="color:${upnl>=0?'var(--up)':'var(--down)'}">${usd(upnl)}</span></div>`;
+    if (!s.positions.length) {
+      posEl.innerHTML = "<div style='color:var(--soft);font-size:14px'>Nessuna posizione aperta.</div>";
+    } else {
+      let html = `<div class="pgrid">
+        <div class="h">TITOLO</div><div class="h num hide-m">INVESTITO</div><div class="h num">VALORE</div><div class="h num">P/L</div><div class="h num">P/L %</div>`;
+      let tInv = 0, tVal = 0, tPl = 0;
+      for (const p of s.positions) {
+        const inv = Number(p.cost_basis || Number(p.qty) * Number(p.avg_entry_price));
+        const val = Number(p.market_value);
+        const pl = Number(p.unrealized_pl);
+        const plpc = Number(p.unrealized_plpc);
+        tInv += inv; tVal += val; tPl += pl;
+        const col = pl >= 0 ? "var(--up)" : "var(--down)";
+        html += `<div class="c"><b>${esc(p.symbol)}</b><br><span class="qty">${Number(p.qty).toFixed(4)} @ ${usd(Number(p.avg_entry_price))}</span></div>
+          <div class="c num hide-m">${usd(inv)}</div>
+          <div class="c num">${usd(val)}</div>
+          <div class="c num" style="color:${col}">${usdS(pl)}</div>
+          <div class="c num" style="color:${col}">${pct(plpc)}</div>`;
+      }
+      const tCol = tPl >= 0 ? "var(--up)" : "var(--down)";
+      html += `<div class="c tot">TOTALE</div>
+        <div class="c num tot hide-m">${usd(tInv)}</div>
+        <div class="c num tot">${usd(tVal)}</div>
+        <div class="c num tot" style="color:${tCol}">${usdS(tPl)}</div>
+        <div class="c num tot" style="color:${tCol}">${tInv ? pct(tPl / tInv) : "—"}</div></div>`;
+      posEl.innerHTML = html;
     }
 
-    // registro
-    const log = document.getElementById("log");
-    log.innerHTML = s.decisions.length ? "" : "<div class='card' style='border-style:dashed;color:var(--soft);font-size:14px'>Registro vuoto: il sistema è in ascolto e interverrà al primo trigger.</div>";
-    for (const d of s.decisions) {
-      let ops = "";
-      for (const x of d.decisions || []) {
-        ops += `<div class="op"><span class="${x.action}">${x.action.toUpperCase()}</span> ${x.asset}${x.usd>0?` · ${usd(x.usd)}`:""}<div class="reason">${x.reasoning||""}</div></div>`;
-      }
-      const nExec = (d.orders?.executed||[]).length;
-      log.innerHTML += `<div class="entry"><div class="head"><span>${dt(d.ts)}</span><span>${nExec} ordini eseguiti</span></div><div class="view">${d.view||""}</div><div style="font-family:var(--mono);font-size:11px;color:var(--soft)">trigger: ${d.trigger}</div>${ops}</div>`;
+    const lastEl = document.getElementById("lastSession");
+    const d0 = (s.decisions || [])[0];
+    lastEl.innerHTML = d0
+      ? `<div class="entry"><div class="head"><span>${dt(d0.ts)}</span><span>${((d0.orders||{}).executed||[]).length} ordini eseguiti</span></div>${decisionHTML(d0)}</div>`
+      : "<div class='card' style='border-style:dashed;color:var(--soft);font-size:14px;margin-top:0'>Nessuna sessione ancora: il sistema è in ascolto e interverrà al primo trigger.</div>";
+
+    const plEl = document.getElementById("propList");
+    plEl.innerHTML = "";
+    for (const p0 of (s.suggestions || []).slice(0, 3)) {
+      const ans = p0.status === "answered" ? esc(p0.answer) : "in valutazione alla prossima sessione (~1 minuto)";
+      plEl.innerHTML += `<div class="op" style="padding:8px 0;border-bottom:1px solid var(--line)"><span style="color:var(--soft)">${dt(p0.ts)}</span> · <b>${esc(p0.text)}</b><div class="reason">${ans}</div></div>`;
     }
-    // impostazioni: popola una sola volta, poi non disturbare l'editing
+
+    const log = document.getElementById("log");
+    document.getElementById("cnt-dec").textContent = (s.decisions || []).length ? `${s.decisions.length} sessioni` : "vuoto";
+    log.innerHTML = (s.decisions || []).length ? "" : "<div style='color:var(--soft);font-size:13px'>Nessuna sessione registrata.</div>";
+    for (const d of s.decisions || []) {
+      const n = ((d.orders||{}).executed || []).length;
+      log.innerHTML += `<details class="inner" id="d${d.ts}"><summary><span class="sumtime">${dt(d.ts)}</span><span class="sumtxt">${esc((d.view || d.trigger || "").slice(0, 90))}</span><span class="sumtime">${n} ord.</span></summary><div class="body">${decisionHTML(d)}</div></details>`;
+    }
+
+    const rvEl = document.getElementById("reviews");
+    const rvsAll = s.reviews || [];
+    document.getElementById("cnt-rev").textContent = rvsAll.length ? `${rvsAll.filter(x=>!x.skipped).length} review` : "in attesa";
+    rvEl.innerHTML = rvsAll.length ? "" : "<div style='color:var(--soft);font-size:13px'>Prima review in arrivo.</div>";
+    for (const rv of rvsAll) {
+      if (rv.skipped) {
+        rvEl.innerHTML += `<div class="op" style="color:var(--soft)">${dt(rv.ts)} · review saltata: nessuna attività</div>`;
+        continue;
+      }
+      let acts = "";
+      for (const a0 of rv.actions || []) {
+        acts += `<div class="op"><span style="color:${a0.ok ? "var(--cobalt)" : "var(--soft)"}">↳ ${esc(a0.type)}${a0.symbol ? " " + esc(a0.symbol) : ""}${a0.profile ? " → " + esc(a0.profile) : ""}</span><div class="reason">${esc(a0.reason || a0.note)}${a0.ok === false ? " (non applicata: " + esc(a0.why) + ")" : ""}</div></div>`;
+      }
+      rvEl.innerHTML += `<details class="inner flag-${esc(rv.flag || "ok")}" id="r${rv.ts}"><summary><span class="sumtime">${dt(rv.ts)}</span><span class="sumtxt">${esc((rv.assessment || "").slice(0, 90))}</span><span class="sumtime">${esc((rv.flag || "ok").toUpperCase())}</span></summary><div class="body"><div class="view">${esc(rv.assessment)}</div>${acts}</div></details>`;
+    }
+
+    const evEl = document.getElementById("events");
+    const evLabel = { boot: "avvio", session_start: "sessione decisionale", trigger_ignored: "trigger osservato (non operativo)", stop_loss: "STOP-LOSS", halt: "HALT", resume: "ripresa", error: "errore", waiting_keys: "in attesa chiavi", settings_change: "impostazioni modificate", user_suggestion: "proposta inviata", supervisor_close: "chiusura da supervisore", supervisor_derisk: "profilo ridotto da supervisore" };
+    const evs = (s.events || []).slice(0, 20);
+    document.getElementById("cnt-ev").textContent = evs.length ? `${evs.length} eventi` : "—";
+    evEl.innerHTML = evs.length ? "" : "<div style='color:var(--soft);font-size:13px'>Nessun evento recente.</div>";
+    for (const e of evs) {
+      let info = "";
+      try {
+        const dd = JSON.parse(e.data);
+        if (dd.triggers) info = dd.triggers.map(t => t.desc).join("; ") + (dd.reason ? " — " + dd.reason : "");
+        else info = dd.trigger || dd.reason || dd.msg || dd.text || dd.symbol || "";
+      } catch (_) {}
+      evEl.innerHTML += `<div class="op" style="padding:6px 0;border-bottom:1px solid var(--line)"><span style="color:var(--soft)">${dt(e.ts)}</span> · <b>${esc(evLabel[e.type] || e.type)}</b>${info ? ` <span class="reason" style="display:inline">· ${esc(info)}</span>` : ""}</div>`;
+    }
+
+    document.getElementById("cur-set").textContent = `${s.risk} · ${s.trading_enabled ? "attivo" : "monitor"}`;
     if (!window.__setInit && s.settings) {
       window.__setInit = true;
       document.getElementById("set_profile").value = s.settings.risk_base;
@@ -243,78 +347,37 @@ async function load(){
       document.getElementById("set_smin").value = String(s.settings.supervisor_every_min);
     }
     document.getElementById("clearDerisk").style.display = s.settings && s.settings.risk_override ? "" : "none";
-
-    // bacino azioni: chips con rimozione
     const chipEl = document.getElementById("stockChips");
     chipEl.innerHTML = "";
     for (const sym of (s.settings && s.settings.stocks) || []) {
       const sp = document.createElement("span");
-      sp.className = "chip";
-      sp.textContent = sym;
+      sp.className = "chip"; sp.textContent = sym;
       const x = document.createElement("a");
-      x.textContent = "×";
-      x.title = "rimuovi dal bacino";
+      x.textContent = "×"; x.title = "rimuovi dal bacino";
       x.onclick = async () => {
-        const r = await fetch(`/api/settings?token=${encodeURIComponent(token)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ remove_stock: sym }) });
-        document.getElementById("setMsg").textContent = r.ok ? sym + " rimosso dal bacino." : "Errore: " + await r.text();
+        const r2 = await fetch(`/api/settings?token=${encodeURIComponent(token)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ remove_stock: sym }) });
+        document.getElementById("setMsg").textContent = r2.ok ? sym + " rimosso dal bacino." : "Errore: " + await r2.text();
         load();
       };
-      sp.appendChild(x);
-      chipEl.appendChild(sp);
+      sp.appendChild(x); chipEl.appendChild(sp);
     }
 
-    // proposte dell'utente e risposte del motore
-    const esc = (t) => String(t || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
-    const plEl = document.getElementById("propList");
-    plEl.innerHTML = "";
-    for (const p0 of s.suggestions || []) {
-      const ans = p0.status === "answered"
-        ? esc(p0.answer)
-        : "in valutazione alla prossima sessione del motore (~1 minuto)";
-      plEl.innerHTML += `<div class="op" style="padding:8px 0;border-bottom:1px solid var(--line)"><span style="color:var(--soft)">${dt(p0.ts)}</span> · <b>${esc(p0.text)}</b><div class="reason">${ans}</div></div>`;
-    }
-
-    // supervisione: le review periodiche di Fable
-    const rvEl = document.getElementById("reviews");
-    const flagColor = { ok: "var(--up)", warning: "#B7791F", critical: "var(--down)" };
-    const rvs = (s.reviews || []).filter(r => !r.skipped).slice(0, 3);
-    const lastRv = (s.reviews || [])[0];
-    rvEl.innerHTML = "";
-    if (!s.reviews || !s.reviews.length) {
-      rvEl.innerHTML = "<div class=\'card\' style=\'border-style:dashed;color:var(--soft);font-size:13px\'>Prima review in arrivo (cadenza: ogni 30 minuti).</div>";
-    } else {
-      if (lastRv && lastRv.skipped) {
-        rvEl.innerHTML += `<div style="font-family:var(--mono);font-size:11px;color:var(--soft);margin-bottom:6px">${dt(lastRv.ts)} · review saltata: nessuna attività</div>`;
-      }
-      for (const r of rvs) {
-        let acts = "";
-        for (const a0 of r.actions || []) {
-          acts += `<div class="op"><span style="color:${a0.ok ? "var(--cobalt)" : "var(--soft)"}">↳ ${a0.type}${a0.symbol ? " " + a0.symbol : ""}${a0.profile ? " → " + a0.profile : ""}</span><div class="reason">${a0.reason || a0.note || ""}${a0.ok === false ? " (non applicata: " + (a0.why || "") + ")" : ""}</div></div>`;
-        }
-        rvEl.innerHTML += `<div class="entry" style="border-left-color:${flagColor[r.flag] || "var(--cobalt)"}"><div class="head"><span>${dt(r.ts)}</span><span style="color:${flagColor[r.flag] || "var(--soft)"}">${(r.flag || "ok").toUpperCase()}</span></div><div class="view">${r.assessment || ""}</div>${acts}</div>`;
-      }
-      if (!rvs.length && lastRv && !lastRv.skipped) {}
-    }
-
-    // attività recente: il battito del sistema anche quando non decide
-    const evEl = document.getElementById("events");
-    const evLabel = { boot: "avvio", session_start: "sessione decisionale", trigger_ignored: "trigger osservato (non operativo)", stop_loss: "STOP-LOSS", halt: "HALT", resume: "ripresa", error: "errore", waiting_keys: "in attesa delle chiavi Alpaca" };
-    const evs = (s.events || []).slice(0, 8);
-    evEl.innerHTML = evs.length ? "" : "<span style=\'color:var(--soft);font-size:13px\'>Nessun evento nelle ultime ore.</span>";
-    for (const e of evs) {
-      let info = "";
-      try {
-        const d0 = JSON.parse(e.data);
-        if (d0.triggers) info = d0.triggers.map(t => t.desc).join("; ") + (d0.reason ? " — " + d0.reason : "");
-        else info = d0.trigger || d0.reason || d0.msg || d0.symbol || "";
-      } catch (_) {}
-      evEl.innerHTML += `<div class="op" style="padding:6px 0;border-bottom:1px solid var(--line)"><span style="color:var(--soft)">${dt(e.ts)}</span> · <b>${evLabel[e.type] || e.type}</b>${info ? ` <span class="reason" style="display:inline">· ${info}</span>` : ""}</div>`;
-    }
+    for (const id of openIds) { const el = document.getElementById(id); if (el) el.open = true; }
   } catch(e) {
     err.textContent = "Errore: " + e.message;
     err.style.display = "block";
   }
 }
+
+document.getElementById("propSend").onclick = async () => {
+  const el = document.getElementById("propText");
+  const text = el.value.trim();
+  if (!text) return;
+  const r = await fetch(`/api/suggest?token=${encodeURIComponent(token)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+  if (r.ok) el.value = "";
+  load();
+};
+document.getElementById("propText").addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("propSend").click(); });
 
 document.getElementById("stockAddBtn").onclick = async () => {
   const el = document.getElementById("stockAdd");
@@ -326,15 +389,7 @@ document.getElementById("stockAddBtn").onclick = async () => {
   load();
 };
 document.getElementById("stockAdd").addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("stockAddBtn").click(); });
-document.getElementById("propSend").onclick = async () => {
-  const el = document.getElementById("propText");
-  const text = el.value.trim();
-  if (!text) return;
-  const r = await fetch(`/api/suggest?token=${encodeURIComponent(token)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
-  if (r.ok) el.value = "";
-  load();
-};
-document.getElementById("propText").addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("propSend").click(); });
+
 document.getElementById("saveSettings").onclick = async () => {
   const body = {
     risk_profile: document.getElementById("set_profile").value,
@@ -352,6 +407,7 @@ document.getElementById("clearDerisk").onclick = async () => {
   document.getElementById("setMsg").textContent = "Riduzione del supervisore annullata.";
   load();
 };
+
 document.getElementById("refresh").onclick = load;
 document.getElementById("halt").onclick = async () => {
   if (!confirm("Fermare il trading? Il monitor resta attivo ma nessun ordine verrà eseguito.")) return;
