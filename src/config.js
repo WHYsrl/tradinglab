@@ -24,7 +24,7 @@ module.exports = {
   },
 
   // Motore
-  MODEL: process.env.MODEL || "claude-sonnet-4-6",
+  MODEL: process.env.MODEL || "claude-opus-5",
   MAX_TOKENS: 1200,
   TEMPERATURE: 0, // decisioni deterministiche e riproducibili: essenziale per l'esperimento
 
