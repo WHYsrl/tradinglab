@@ -53,6 +53,7 @@ app.get("/api/state", auth, async (_req, res) => {
         model: settings.model(),
         supervisor_model: settings.supervisorModel(),
         supervisor_every_min: settings.supervisorEveryMin(),
+        stocks: settings.stocks(),
         risk_override: db.kvGet("risk_override"),
       },
       positions,
@@ -83,7 +84,7 @@ app.post("/api/suggest", auth, (req, res) => {
 });
 
 // Impostazioni dalla dashboard: salvate nel DB persistente, effetto immediato
-app.post("/api/settings", auth, (req, res) => {
+app.post("/api/settings", auth, async (req, res) => {
   const b = req.body || {};
   const changes = {};
   if (b.risk_profile !== undefined) {
@@ -110,6 +111,31 @@ app.post("/api/settings", auth, (req, res) => {
     const n = Math.min(240, Math.max(10, Number(b.supervisor_every_min) || 30));
     db.kvSet("cfg_supervisor_every_min", n);
     changes.supervisor_every_min = n;
+  }
+  if (b.add_stock !== undefined) {
+    const sym = String(b.add_stock).trim().toUpperCase();
+    if (!/^[A-Z.]{1,6}$/.test(sym)) return res.status(400).send("simbolo non valido");
+    const cur = settings.stocks();
+    if (cur.includes(sym) || C.ASSETS.includes(sym)) return res.status(400).send(sym + " e gia nel bacino");
+    if (cur.length >= C.MAX_STOCKS) return res.status(400).send("bacino pieno (max " + C.MAX_STOCKS + " azioni)");
+    let asset;
+    try { asset = await alpaca.asset(sym); } catch (_) { return res.status(400).send(sym + ": non trovato su Alpaca"); }
+    if (asset.status !== "active" || !asset.tradable) return res.status(400).send(sym + ": non negoziabile su Alpaca");
+    if (asset.class && asset.class !== "us_equity") return res.status(400).send(sym + ": non e un titolo azionario USA");
+    if (!asset.fractionable) return res.status(400).send(sym + ": non frazionabile, incompatibile con gli ordini in controvalore");
+    db.kvSet("cfg_stocks", [...cur, sym]);
+    changes.add_stock = sym;
+  }
+  if (b.remove_stock !== undefined) {
+    const sym = String(b.remove_stock).trim().toUpperCase();
+    try {
+      const positions = await alpaca.positions();
+      if (positions.find((p) => p.symbol === sym)) {
+        return res.status(400).send(sym + ": posizione aperta, chiudila prima di rimuoverlo dal bacino");
+      }
+    } catch (_) {}
+    db.kvSet("cfg_stocks", settings.stocks().filter((x) => x !== sym));
+    changes.remove_stock = sym;
   }
   if (b.clear_derisk) {
     db.kvSet("risk_override", null);

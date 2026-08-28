@@ -11,6 +11,7 @@ module.exports = {
   STOCK_DESC:
     "AAPL (Apple), MSFT (Microsoft), NVDA (Nvidia), GOOGL (Alphabet), AMZN (Amazon), META (Meta), TSLA (Tesla), AVGO (Broadcom), JPM (JPMorgan), XOM (Exxon)",
   STOCK_TRIGGER_MULT: 1.5, // soglia trigger azioni = priceTriggerPct * questo fattore
+  MAX_STOCKS: 30, // tetto del bacino azioni modificabile dalla dashboard
 
   // Universo crypto: negoziabile 24/7 su Alpaca (nelle posizioni compare senza slash: BTCUSD)
   CRYPTO_ASSETS: ["BTC/USD", "ETH/USD"],

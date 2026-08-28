@@ -31,7 +31,7 @@ function buildPrompt(ctx) {
     : "- nessuna notizia rilevante nelle ultime ore";
 
   return `Sei il motore decisionale di un ESPERIMENTO di trading su conto PAPER (nessun denaro reale).
-Universo: ETF internazionali — ${C.ASSET_DESC} —, azioni USA — ${C.STOCK_DESC} — e crypto — ${C.CRYPTO_DESC}.
+Universo: ETF internazionali — ${C.ASSET_DESC} —, azioni USA — ${settings.stocks().join(", ") || "nessuna al momento"} — e crypto — ${C.CRYPTO_DESC}.
 
 MOTIVO DI QUESTA SESSIONE: ${ctx.trigger}
 ${ctx.etfSession === "extended" ? "\nBORSA USA IN SESSIONE ESTESA (pre-market/after-hours/overnight): gli ordini ETF verranno piazzati come limit; liquidità ridotta e spread più ampi — opera sugli ETF solo con segnale forte." : ""}${ctx.etfSession === "closed" ? "\nWEEKEND: borsa USA chiusa, sono eseguibili solo ordini crypto; per gli ETF usa hold." : ""}

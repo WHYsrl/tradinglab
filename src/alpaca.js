@@ -21,6 +21,7 @@ async function req(base, path, opts = {}) {
 
 module.exports = {
   clock: () => req(TRADE_BASE, "/v2/clock"),
+  asset: (symbol) => req(TRADE_BASE, `/v2/assets/${symbol}`),
   account: () => req(TRADE_BASE, "/v2/account"),
   positions: () => req(TRADE_BASE, "/v2/positions"),
 

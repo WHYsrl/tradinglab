@@ -9,8 +9,9 @@ let tickCount = 0;
 let running = false;
 let warnedNoKeys = false;
 
-const EQUITY_ASSETS = [...C.ASSETS, ...C.STOCKS];
-const ALL_ASSETS = [...EQUITY_ASSETS, ...C.CRYPTO_ASSETS];
+// Il bacino azioni è modificabile a caldo dalla dashboard: va riletto a ogni uso
+const equityAssets = () => [...C.ASSETS, ...settings.stocks()];
+const allAssets = () => [...equityAssets(), ...C.CRYPTO_ASSETS];
 
 const nyTime = () => {
   const p = new Intl.DateTimeFormat("en-US", {
@@ -85,7 +86,7 @@ async function tick() {
       alpaca.clock(),
       alpaca.account(),
       alpaca.positions(),
-      alpaca.marketData(EQUITY_ASSETS, C.CRYPTO_ASSETS),
+      alpaca.marketData(equityAssets(), C.CRYPTO_ASSETS),
     ]);
     const prices = market.prices;
     const equity = Number(account.equity);
@@ -140,7 +141,7 @@ async function tick() {
     if (tickCount % C.NEWS_EVERY_TICKS === 1) {
       const since = db.kvGet("news_since", Date.now() - 12 * 3600 * 1000);
       try {
-        const items = await alpaca.news([...EQUITY_ASSETS, ...C.CRYPTO_NEWS_SYMBOLS], since);
+        const items = await alpaca.news([...equityAssets(), ...C.CRYPTO_NEWS_SYMBOLS], since);
         freshNews = db.addNews(items);
         db.kvSet("news_since", Date.now() - 5 * 60 * 1000);
       } catch (e) {
@@ -170,7 +171,7 @@ async function tick() {
     // ETF: trigger di prezzo in orario regolare E nelle sessioni estese (24/5)
     if (etfSession !== "closed") {
       for (const a of C.ASSETS) priceTrigger(a, prof.priceTriggerPct);
-      for (const a of C.STOCKS) priceTrigger(a, prof.priceTriggerPct * C.STOCK_TRIGGER_MULT);
+      for (const a of settings.stocks()) priceTrigger(a, prof.priceTriggerPct * C.STOCK_TRIGGER_MULT);
     }
 
     if (clock.is_open) {
@@ -236,12 +237,12 @@ async function tick() {
     // Trend a N giorni: una sola chiamata, solo quando serve davvero una decisione
     let trendData = {};
     try {
-      trendData = await alpaca.trend(C.ASSETS, C.CRYPTO_ASSETS, C.TREND_DAYS);
+      trendData = await alpaca.trend(equityAssets(), C.CRYPTO_ASSETS, C.TREND_DAYS);
     } catch (e) {
       db.addEvent("error", { where: "trend", msg: e.message });
     }
     const marketCtx = {};
-    for (const a of ALL_ASSETS) {
+    for (const a of allAssets()) {
       marketCtx[a] = {
         price: prices[a] ?? null,
         changePct: (market.daily[a] && market.daily[a].changePct) ?? null,
@@ -320,7 +321,7 @@ async function tick() {
 }
 
 function start() {
-  db.addEvent("boot", { risk: riskProfile(), assets: ALL_ASSETS });
+  db.addEvent("boot", { risk: riskProfile(), assets: allAssets() });
   tick();
   setInterval(tick, C.TICK_SECONDS * 1000);
 }

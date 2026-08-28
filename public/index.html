@@ -36,6 +36,8 @@
   .footer{margin-top:24px;font-family:var(--mono);font-size:11px;color:var(--soft);line-height:1.6}
   .fld{font-family:var(--mono);font-size:11px;color:var(--soft);display:flex;flex-direction:column;gap:4px;letter-spacing:.05em}
   input[type=text]{padding:9px 10px;border:1px solid var(--line);border-radius:6px;font-family:var(--sans);font-size:14px;background:var(--card);color:var(--ink)}
+  .chip{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:14px;padding:4px 10px;background:var(--card);display:inline-flex;align-items:center;gap:5px}
+  .chip a{color:var(--down);cursor:pointer;font-weight:700}
   select{padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-size:13px;background:var(--card);color:var(--ink)}
   #err{display:none;margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--down);background:#FBEDEA;border:1px solid var(--down);border-radius:6px;padding:8px 12px}
 </style>
@@ -87,6 +89,12 @@
         <select id="set_smin"><option value="15">15 min</option><option value="30">30 min</option><option value="60">1 ora</option><option value="120">2 ore</option></select></label>
       <button id="saveSettings" class="ok">Salva</button>
       <button id="clearDerisk" class="danger" style="display:none">Annulla riduzione supervisore</button>
+    </div>
+    <div class="lbl" style="margin-top:16px">BACINO AZIONI (ETF e crypto restano fissi)</div>
+    <div id="stockChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="stockAdd" placeholder="ticker, es. PLTR" style="width:150px;text-transform:uppercase">
+      <button id="stockAddBtn">Aggiungi</button>
     </div>
     <div id="setMsg" style="font-family:var(--mono);font-size:11px;color:var(--soft);margin-top:8px"></div>
   </div>
@@ -236,6 +244,25 @@ async function load(){
     }
     document.getElementById("clearDerisk").style.display = s.settings && s.settings.risk_override ? "" : "none";
 
+    // bacino azioni: chips con rimozione
+    const chipEl = document.getElementById("stockChips");
+    chipEl.innerHTML = "";
+    for (const sym of (s.settings && s.settings.stocks) || []) {
+      const sp = document.createElement("span");
+      sp.className = "chip";
+      sp.textContent = sym;
+      const x = document.createElement("a");
+      x.textContent = "×";
+      x.title = "rimuovi dal bacino";
+      x.onclick = async () => {
+        const r = await fetch(`/api/settings?token=${encodeURIComponent(token)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ remove_stock: sym }) });
+        document.getElementById("setMsg").textContent = r.ok ? sym + " rimosso dal bacino." : "Errore: " + await r.text();
+        load();
+      };
+      sp.appendChild(x);
+      chipEl.appendChild(sp);
+    }
+
     // proposte dell'utente e risposte del motore
     const esc = (t) => String(t || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
     const plEl = document.getElementById("propList");
@@ -289,6 +316,16 @@ async function load(){
   }
 }
 
+document.getElementById("stockAddBtn").onclick = async () => {
+  const el = document.getElementById("stockAdd");
+  const sym = el.value.trim().toUpperCase();
+  if (!sym) return;
+  const r = await fetch(`/api/settings?token=${encodeURIComponent(token)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ add_stock: sym }) });
+  document.getElementById("setMsg").textContent = r.ok ? sym + " aggiunto al bacino: attivo dal prossimo ciclo." : "Errore: " + await r.text();
+  if (r.ok) el.value = "";
+  load();
+};
+document.getElementById("stockAdd").addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("stockAddBtn").click(); });
 document.getElementById("propSend").onclick = async () => {
   const el = document.getElementById("propText");
   const text = el.value.trim();

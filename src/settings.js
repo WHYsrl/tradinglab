@@ -22,6 +22,11 @@ module.exports = {
   supervisorModel() {
     return db.kvGet("cfg_supervisor_model") || C.SUPERVISOR_MODEL;
   },
+  stocks() {
+    const kv = db.kvGet("cfg_stocks");
+    if (Array.isArray(kv)) return kv.filter((x) => typeof x === "string");
+    return C.STOCKS;
+  },
   supervisorEveryMin() {
     const kv = Number(db.kvGet("cfg_supervisor_every_min"));
     if (kv >= 10 && kv <= 240) return kv;
