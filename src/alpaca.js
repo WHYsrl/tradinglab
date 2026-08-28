@@ -106,6 +106,27 @@ module.exports = {
     });
   },
 
+  // Ordine LIMIT per le sessioni estese ETF (pre-market, after-hours, overnight 24/5):
+  // fuori dall'orario regolare Alpaca accetta solo limit + extended_hours (qty anche frazionaria)
+  submitLimitOrder({ symbol, qty, side, limit_price }) {
+    return req(TRADE_BASE, "/v2/orders", {
+      method: "POST",
+      body: JSON.stringify({
+        symbol,
+        qty: String(qty),
+        side,
+        type: "limit",
+        limit_price: String(limit_price),
+        time_in_force: "day",
+        extended_hours: true,
+      }),
+    });
+  },
+
+  // Cancella tutti gli ordini aperti (limit non eseguiti di sessioni precedenti:
+  // evita doppie esecuzioni quando una nuova sessione decide di nuovo)
+  cancelOpenOrders: () => req(TRADE_BASE, "/v2/orders", { method: "DELETE" }),
+
   // Chiusura totale di una posizione (usata dallo stop-loss deterministico)
   closePosition: (symbol) => req(TRADE_BASE, `/v2/positions/${symbol.replace("/", "")}`, { method: "DELETE" }),
 };

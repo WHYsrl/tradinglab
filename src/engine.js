@@ -33,7 +33,7 @@ function buildPrompt(ctx) {
 Universo: ETF internazionali — ${C.ASSET_DESC} — e crypto — ${C.CRYPTO_DESC}.
 
 MOTIVO DI QUESTA SESSIONE: ${ctx.trigger}
-${ctx.marketOpen === false ? "\nBORSA USA CHIUSA: in questo momento sono eseguibili solo ordini crypto; per gli ETF usa hold (le decisioni su di essi si riproporranno in apertura)." : ""}
+${ctx.etfSession === "extended" ? "\nBORSA USA IN SESSIONE ESTESA (pre-market/after-hours/overnight): gli ordini ETF verranno piazzati come limit; liquidità ridotta e spread più ampi — opera sugli ETF solo con segnale forte." : ""}${ctx.etfSession === "closed" ? "\nWEEKEND: borsa USA chiusa, sono eseguibili solo ordini crypto; per gli ETF usa hold." : ""}
 
 MERCATO:
 ${marketLines}

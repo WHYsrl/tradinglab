@@ -24,8 +24,8 @@ function clampDecisions(decisions, ctx) {
   for (const d of decisions || []) {
     if (!universe.includes(d.asset)) { rejected.push({ ...d, why: "asset fuori universo" }); continue; }
     if (d.action === "hold" || !d.usd || d.usd <= 0) continue;
-    if (!isCrypto(d.asset) && ctx.marketOpen === false) {
-      rejected.push({ ...d, why: "borsa USA chiusa: ora sono negoziabili solo le crypto" });
+    if (!isCrypto(d.asset) && ctx.etfSession === "closed") {
+      rejected.push({ ...d, why: "weekend: borsa USA chiusa, sono negoziabili solo le crypto" });
       continue;
     }
     if (orders.length >= maxNew) { rejected.push({ ...d, why: "tetto ordini giornaliero raggiunto" }); continue; }

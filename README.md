@@ -36,7 +36,8 @@ Costo indicativo: istanza Starter ~7 $/mese + disco ~0,25 $/mese + consumo API A
 - **Stop-loss automatico per posizione**: ETF −4% / −6% / −8% e crypto −6% / −8% / −10% (prudente / bilanciato / aggressivo). Chiusura deterministica eseguita dal monitor, fuori dal controllo dell'AI; non conta nel tetto ordini giornaliero.
 - **Cooldown**: minimo 20 minuti tra due sessioni decisionali (salvo emergenza: movimento ≥ 2× soglia).
 - **Tetto ordini**: massimo 12 al giorno.
-- **Crypto**: sub-tetto di esposizione (10% / 20% / 40% dell'equity per profilo), trigger di prezzo più larghi (3% / 2.5% / 2%) e trading 24/7; a borsa USA chiusa il risk layer respinge qualunque ordine su ETF.
+- **Crypto**: sub-tetto di esposizione (10% / 20% / 40% dell'equity per profilo), trigger di prezzo più larghi (3% / 2.5% / 2%) e trading 24/7.
+- **ETF 24/5**: fuori dall'orario regolare (pre-market, after-hours e sessione overnight, da domenica sera a venerdì sera ora di New York) gli ordini ETF vengono piazzati come limit con `extended_hours` e un piccolo buffer di prezzo (0,2%); liquidità ridotta, il modello ne è avvisato. Nel weekend restano negoziabili solo le crypto. I limit non eseguiti vengono cancellati all'inizio della sessione decisionale successiva.
 - Il risk layer taglia qualunque ordine oltre i limiti del profilo, qualunque cosa dica il modello.
 
 ## Metodo sperimentale suggerito
@@ -48,4 +49,4 @@ Costo indicativo: istanza Starter ~7 $/mese + disco ~0,25 $/mese + consumo API A
 
 ## Disclaimer
 
-Progetto sperimentale. Non è consulenza finanziaria; nessuna garanzia di rendimento. I mercati azionari hanno orari: fuori sessione il sistema monitora le notizie e decide alla riapertura.
+Progetto sperimentale. Non è consulenza finanziaria; nessuna garanzia di rendimento. Gli ETF sono negoziabili quasi 24/5 (sessioni estese con ordini limit); nel weekend restano solo le crypto.

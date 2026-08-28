@@ -39,6 +39,10 @@ module.exports = {
   // il trading si ferma da solo. Protegge anche i profitti accumulati, non solo il capitale iniziale.
   GLOBAL_STOP_DRAWDOWN: 0.20,
 
+  // Sessioni estese ETF (pre-market, after-hours, overnight 24/5): solo ordini limit.
+  // Buffer sul prezzo per farsi eseguire in book sottili senza subire slippage arbitrario.
+  EXT_LIMIT_BUFFER: 0.002, // 0.2%
+
   // Barre giornaliere passate al modello come contesto di trend
   TREND_DAYS: 5,
 

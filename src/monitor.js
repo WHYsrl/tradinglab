@@ -18,6 +18,21 @@ const nyTime = () => {
 };
 const today = () => new Date().toISOString().slice(0, 10);
 
+// Sessione ETF: 'regular' (borsa aperta), 'extended' (pre-market/after-hours/overnight 24/5),
+// 'closed' (weekend: da venerdì 20:00 ET a domenica 20:00 ET)
+function etfSessionNow(clock) {
+  if (clock.is_open) return "regular";
+  const p = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(new Date());
+  const wd = p.find((x) => x.type === "weekday").value;
+  const mins = +p.find((x) => x.type === "hour").value * 60 + +p.find((x) => x.type === "minute").value;
+  if (wd === "Sat") return "closed";
+  if (wd === "Sun") return mins >= 20 * 60 ? "extended" : "closed";
+  if (wd === "Fri" && mins >= 20 * 60) return "closed";
+  return "extended";
+}
+
 function riskProfile() {
   return C.RISK_PROFILES[process.env.RISK_PROFILE] ? process.env.RISK_PROFILE : "bilanciato";
 }
@@ -71,6 +86,7 @@ async function tick() {
     const cash = Number(account.cash);
     const profile = riskProfile();
     const prof = C.RISK_PROFILES[profile];
+    const etfSession = etfSessionNow(clock);
 
     // Snapshot: sempre a borsa aperta; ogni ~5 min a borsa chiusa (le crypto si muovono comunque)
     if (clock.is_open || tickCount % C.CLOSED_SNAPSHOT_EVERY_TICKS === 1) {
@@ -145,9 +161,12 @@ async function tick() {
     // Crypto: trigger di prezzo attivi 24/7 (soglia più larga: volatilità maggiore)
     for (const a of C.CRYPTO_ASSETS) priceTrigger(a, prof.cryptoTriggerPct);
 
-    if (clock.is_open) {
+    // ETF: trigger di prezzo in orario regolare E nelle sessioni estese (24/5)
+    if (etfSession !== "closed") {
       for (const a of C.ASSETS) priceTrigger(a, prof.priceTriggerPct);
+    }
 
+    if (clock.is_open) {
       // Check-in programmati (una volta al giorno ciascuno; robusti a riavvii tardivi)
       const t = nyTime();
       const mins = t.h * 60 + t.m;
@@ -228,7 +247,7 @@ async function tick() {
       cash,
       positions: openPositions,
       risk: profile,
-      marketOpen: clock.is_open,
+      etfSession,
       news: db.recentNews(12),
       lastDecisionsSummary: decisionsWithOutcome(prices),
       stopLossNote,
@@ -239,9 +258,25 @@ async function tick() {
     const { orders, rejected } = risk.clampDecisions(parsed.decisions, ctx);
 
     const executed = [];
+    if (orders.length) {
+      // Limit non eseguiti di sessioni precedenti: via, per evitare doppie esecuzioni
+      try { await alpaca.cancelOpenOrders(); } catch (e) { db.addEvent("error", { where: "cancel_orders", msg: e.message }); }
+    }
     for (const o of orders) {
       try {
-        const r = await alpaca.submitOrder(o);
+        let r;
+        const crypto = o.symbol.includes("/");
+        if (!crypto && etfSession === "extended") {
+          // Sessione estesa: solo limit + extended_hours (qty frazionaria, buffer di prezzo)
+          const px = prices[o.symbol];
+          if (!px) throw new Error("prezzo non disponibile per ordine limit");
+          const limit = Math.round(px * (o.side === "buy" ? 1 + C.EXT_LIMIT_BUFFER : 1 - C.EXT_LIMIT_BUFFER) * 100) / 100;
+          const qty = Math.floor((o.notional / limit) * 1000) / 1000;
+          if (qty <= 0) throw new Error("quantita nulla per ordine limit esteso");
+          r = await alpaca.submitLimitOrder({ symbol: o.symbol, qty, side: o.side, limit_price: limit });
+        } else {
+          r = await alpaca.submitOrder(o);
+        }
         executed.push({ ...o, order_id: r.id, status: r.status });
         db.kvSet(orderCountKey, db.kvGet(orderCountKey, 0) + 1);
       } catch (e) {
