@@ -32,7 +32,7 @@ module.exports = {
 
   // Motore
   MODEL: process.env.MODEL || "claude-opus-5",
-  MAX_TOKENS: 1200,
+  MAX_TOKENS: 4000, // i modelli gen-5 spendono parte del budget in ragionamento interno: serve margine
   // Nota: i modelli di generazione 5 non accettano `temperature` (thinking adattivo integrato)
 
   // Ritmo del monitor
@@ -45,7 +45,7 @@ module.exports = {
   // Supervisore: review periodica con Fable che analizza l'andamento e può SOLO ridurre il rischio
   SUPERVISOR_MODEL: process.env.SUPERVISOR_MODEL || "claude-fable-5",
   SUPERVISOR_EVERY_MIN: Number(process.env.SUPERVISOR_EVERY_MIN) || 30,
-  SUPERVISOR_MAX_TOKENS: 1000,
+  SUPERVISOR_MAX_TOKENS: 3000, // idem: margine per il thinking adattivo
 
   // Kill switch automatico TRAILING: se l'equity scende oltre X% dal PICCO (high-water mark)
   // il trading si ferma da solo. Protegge anche i profitti accumulati, non solo il capitale iniziale.

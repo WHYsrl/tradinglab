@@ -277,7 +277,20 @@ async function tick() {
       remainingOrders: C.MAX_ORDERS_PER_DAY - usedOrders,
     };
 
-    const { parsed, raw } = await engine.decide(ctx);
+    let parsed, raw;
+    try {
+      ({ parsed, raw } = await engine.decide(ctx));
+      db.kvSet("engine_fail_streak", 0);
+    } catch (e) {
+      db.addEvent("error", { where: "engine", msg: e.message });
+      const fails = db.kvGet("engine_fail_streak", 0) + 1;
+      db.kvSet("engine_fail_streak", fails);
+      if (pendingProps.length && fails >= 3) {
+        db.answerSuggestions(pendingProps.map((x) => x.ts), "Il motore non e riuscito a elaborare una risposta per un errore tecnico ripetuto: riprova tra qualche minuto.");
+        db.kvSet("engine_fail_streak", 0);
+      }
+      return;
+    }
     const { orders, rejected } = risk.clampDecisions(parsed.decisions, ctx);
 
     const executed = [];

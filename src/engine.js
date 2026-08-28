@@ -88,7 +88,12 @@ async function decide(ctx) {
     .filter((b) => b.type === "text")
     .map((b) => b.text)
     .join("\n");
-  return { parsed: extractJSON(text), raw: text };
+  try {
+    return { parsed: extractJSON(text), raw: text };
+  } catch (e) {
+    const hint = data.stop_reason === "max_tokens" ? " (risposta troncata: max_tokens raggiunto)" : "";
+    throw new Error(e.message + hint);
+  }
 }
 
 module.exports = { decide };
