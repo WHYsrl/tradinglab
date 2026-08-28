@@ -26,7 +26,7 @@ module.exports = {
   // Motore
   MODEL: process.env.MODEL || "claude-opus-5",
   MAX_TOKENS: 1200,
-  TEMPERATURE: 0, // decisioni deterministiche e riproducibili: essenziale per l'esperimento
+  // Nota: i modelli di generazione 5 non accettano `temperature` (thinking adattivo integrato)
 
   // Ritmo del monitor
   TICK_SECONDS: 60,          // frequenza lettura prezzi

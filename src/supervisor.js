@@ -75,7 +75,6 @@ async function callFable(prompt) {
     body: JSON.stringify({
       model: C.SUPERVISOR_MODEL,
       max_tokens: C.SUPERVISOR_MAX_TOKENS,
-      temperature: 0,
       messages: [{ role: "user", content: prompt }],
     }),
   });

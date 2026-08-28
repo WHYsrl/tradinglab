@@ -77,7 +77,6 @@ async function decide(ctx) {
     body: JSON.stringify({
       model: C.MODEL,
       max_tokens: C.MAX_TOKENS,
-      temperature: C.TEMPERATURE,
       messages: [{ role: "user", content: buildPrompt(ctx) }],
     }),
   });
