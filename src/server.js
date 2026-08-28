@@ -4,6 +4,7 @@ const db = require("./db");
 const alpaca = require("./alpaca");
 const monitor = require("./monitor");
 const supervisor = require("./supervisor");
+const settings = require("./settings");
 const C = require("./config");
 
 const app = express();
@@ -44,9 +45,16 @@ app.get("/api/state", auth, async (_req, res) => {
       market_open: clock.is_open,
       etf_session: monitor.etfSessionNow(clock),
       halted: db.kvGet("halted"),
-      trading_enabled: process.env.TRADING_ENABLED === "true",
+      trading_enabled: settings.tradingEnabled(),
       risk: monitor.riskProfile(),
-      risk_base: process.env.RISK_PROFILE || "bilanciato",
+      risk_base: settings.riskProfileBase(),
+      settings: {
+        risk_base: settings.riskProfileBase(),
+        model: settings.model(),
+        supervisor_model: settings.supervisorModel(),
+        supervisor_every_min: settings.supervisorEveryMin(),
+        risk_override: db.kvGet("risk_override"),
+      },
       positions,
       history: db.history(),
       decisions: db.lastDecisions(30).map((d) => ({
@@ -62,6 +70,43 @@ app.get("/api/state", auth, async (_req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// Impostazioni dalla dashboard: salvate nel DB persistente, effetto immediato
+app.post("/api/settings", auth, (req, res) => {
+  const b = req.body || {};
+  const changes = {};
+  if (b.risk_profile !== undefined) {
+    if (!C.RISK_PROFILES[b.risk_profile]) return res.status(400).send("profilo non valido");
+    db.kvSet("cfg_risk_profile", b.risk_profile);
+    changes.risk_profile = b.risk_profile;
+  }
+  if (b.trading_enabled !== undefined) {
+    const v = b.trading_enabled === true || b.trading_enabled === "true";
+    db.kvSet("cfg_trading_enabled", v);
+    changes.trading_enabled = v;
+  }
+  if (b.model !== undefined) {
+    if (!/^claude-[a-z0-9.-]+$/.test(b.model)) return res.status(400).send("modello non valido");
+    db.kvSet("cfg_model", b.model);
+    changes.model = b.model;
+  }
+  if (b.supervisor_model !== undefined) {
+    if (!/^claude-[a-z0-9.-]+$/.test(b.supervisor_model)) return res.status(400).send("modello supervisore non valido");
+    db.kvSet("cfg_supervisor_model", b.supervisor_model);
+    changes.supervisor_model = b.supervisor_model;
+  }
+  if (b.supervisor_every_min !== undefined) {
+    const n = Math.min(240, Math.max(10, Number(b.supervisor_every_min) || 30));
+    db.kvSet("cfg_supervisor_every_min", n);
+    changes.supervisor_every_min = n;
+  }
+  if (b.clear_derisk) {
+    db.kvSet("risk_override", null);
+    changes.clear_derisk = true;
+  }
+  db.addEvent("settings_change", changes);
+  res.json({ ok: true, changes });
 });
 
 // Kill switch manuale dal telefono

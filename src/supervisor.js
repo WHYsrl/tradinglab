@@ -7,6 +7,7 @@
 const C = require("./config");
 const db = require("./db");
 const alpaca = require("./alpaca");
+const settings = require("./settings");
 
 let running = false;
 const PRUDENCE_ORDER = ["prudente", "bilanciato", "aggressivo"];
@@ -73,7 +74,7 @@ async function callFable(prompt) {
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: C.SUPERVISOR_MODEL,
+      model: settings.supervisorModel(),
       max_tokens: C.SUPERVISOR_MAX_TOKENS,
       messages: [{ role: "user", content: prompt }],
     }),
@@ -141,7 +142,7 @@ async function reviewOnce(monitor) {
     const lastReviewEquity = db.kvGet("last_review_equity", equity);
     const halted = db.kvGet("halted");
     const override = db.kvGet("risk_override");
-    const baseProfile = C.RISK_PROFILES[process.env.RISK_PROFILE] ? process.env.RISK_PROFILE : "bilanciato";
+    const baseProfile = settings.riskProfileBase();
     const profile = monitor.riskProfile();
 
     const sinceHours = Math.max(0.6, (Date.now() - lastReviewTs) / 3600000);
@@ -173,7 +174,7 @@ async function reviewOnce(monitor) {
       etfSession: monitor.etfSessionNow(clock),
       halted: !!halted,
       haltReason: halted && halted.reason,
-      tradingEnabled: process.env.TRADING_ENABLED === "true",
+      tradingEnabled: settings.tradingEnabled(),
       lastDecisionsSummary: monitor.decisionsWithOutcome ? monitor.decisionsWithOutcome(prices) : "",
       newEvents,
       sinceHours,
@@ -191,10 +192,14 @@ async function reviewOnce(monitor) {
   }
 }
 
+function schedule(monitor) {
+  // cadenza letta a ogni giro: modificabile dalla dashboard senza riavvio
+  setTimeout(async () => { await reviewOnce(monitor); schedule(monitor); }, settings.supervisorEveryMin() * 60 * 1000);
+}
+
 function start(monitor) {
   // prima review dopo 3 minuti dal boot, poi a cadenza regolare
-  setTimeout(() => reviewOnce(monitor), 3 * 60 * 1000);
-  setInterval(() => reviewOnce(monitor), C.SUPERVISOR_EVERY_MIN * 60 * 1000);
+  setTimeout(async () => { await reviewOnce(monitor); schedule(monitor); }, 3 * 60 * 1000);
 }
 
 module.exports = { start };

@@ -3,6 +3,7 @@ const db = require("./db");
 const alpaca = require("./alpaca");
 const engine = require("./engine");
 const risk = require("./risk");
+const settings = require("./settings");
 
 let tickCount = 0;
 let running = false;
@@ -35,7 +36,7 @@ function etfSessionNow(clock) {
 
 function riskProfile() {
   const order = ["prudente", "bilanciato", "aggressivo"];
-  const base = C.RISK_PROFILES[process.env.RISK_PROFILE] ? process.env.RISK_PROFILE : "bilanciato";
+  const base = settings.riskProfileBase();
   const ov = db.kvGet("risk_override"); // il supervisore può solo renderlo più prudente
   if (ov && C.RISK_PROFILES[ov] && order.indexOf(ov) < order.indexOf(base)) return ov;
   return base;
@@ -107,7 +108,7 @@ async function tick() {
       db.addEvent("halt", { equity, peak });
     }
 
-    const tradingOn = process.env.TRADING_ENABLED === "true" && !db.kvGet("halted");
+    const tradingOn = settings.tradingEnabled() && !db.kvGet("halted");
 
     // Stop-loss deterministico per posizione: non passa dall'AI e non conta nel tetto ordini.
     // ETF solo a borsa aperta; crypto 24/7.

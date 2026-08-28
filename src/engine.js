@@ -1,4 +1,5 @@
 const C = require("./config");
+const settings = require("./settings");
 
 function fmtPct(n) {
   if (n === null || n === undefined || Number.isNaN(Number(n))) return "n/d";
@@ -75,7 +76,7 @@ async function decide(ctx) {
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: C.MODEL,
+      model: settings.model(),
       max_tokens: C.MAX_TOKENS,
       messages: [{ role: "user", content: buildPrompt(ctx) }],
     }),

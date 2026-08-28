@@ -28,6 +28,7 @@ Sistema autonomo che monitora prezzi e notizie sui mercati internazionali (ETF U
    - `RISK_PROFILE` → `prudente` | `bilanciato` | `aggressivo`
    - `TRADING_ENABLED` → `true` (con `false` il sistema monitora e logga ma non ordina: utile i primi giorni)
 3. Al termine del deploy apri: `https://<nome-servizio>.onrender.com/?token=<DASH_TOKEN>`
+4. Da quel momento profilo di rischio, trading on/off, modelli e cadenza delle review si regolano **dalla dashboard** (card Impostazioni): salvate nel DB persistente, effetto immediato senza riavvio. Le variabili d'ambiente restano solo come default iniziali.
 
 Costo indicativo: istanza Starter ~7 $/mese + disco ~0,25 $/mese + consumo API Anthropic (event-driven: pochi euro/mese).
 
