@@ -3,6 +3,7 @@ const path = require("path");
 const db = require("./db");
 const alpaca = require("./alpaca");
 const monitor = require("./monitor");
+const supervisor = require("./supervisor");
 const C = require("./config");
 
 const app = express();
@@ -44,7 +45,8 @@ app.get("/api/state", auth, async (_req, res) => {
       etf_session: monitor.etfSessionNow(clock),
       halted: db.kvGet("halted"),
       trading_enabled: process.env.TRADING_ENABLED === "true",
-      risk: process.env.RISK_PROFILE || "bilanciato",
+      risk: monitor.riskProfile(),
+      risk_base: process.env.RISK_PROFILE || "bilanciato",
       positions,
       history: db.history(),
       decisions: db.lastDecisions(30).map((d) => ({
@@ -53,6 +55,7 @@ app.get("/api/state", auth, async (_req, res) => {
         orders: JSON.parse(d.orders),
       })),
       events: db.lastEvents(30),
+      reviews: db.lastReviews(6).map((r) => { try { return { ...r, actions: JSON.parse(r.actions) }; } catch (_) { return r; } }),
       news: db.recentNews(12),
       config: { assets: C.ASSETS, stop: C.GLOBAL_STOP_DRAWDOWN },
     });
@@ -79,4 +82,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Trading Lab attivo sulla porta ${PORT}`);
   monitor.start();
+  supervisor.start(monitor);
 });

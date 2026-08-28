@@ -34,7 +34,11 @@ function etfSessionNow(clock) {
 }
 
 function riskProfile() {
-  return C.RISK_PROFILES[process.env.RISK_PROFILE] ? process.env.RISK_PROFILE : "bilanciato";
+  const order = ["prudente", "bilanciato", "aggressivo"];
+  const base = C.RISK_PROFILES[process.env.RISK_PROFILE] ? process.env.RISK_PROFILE : "bilanciato";
+  const ov = db.kvGet("risk_override"); // il supervisore può solo renderlo più prudente
+  if (ov && C.RISK_PROFILES[ov] && order.indexOf(ov) < order.indexOf(base)) return ov;
+  return base;
 }
 
 // Esiti delle ultime decisioni: cosa è stato eseguito e come si è mosso il prezzo da allora
@@ -250,6 +254,10 @@ async function tick() {
       etfSession,
       news: db.recentNews(12),
       lastDecisionsSummary: decisionsWithOutcome(prices),
+      supervisorNote: (() => {
+        const n = db.kvGet("supervisor_note");
+        return n && Date.now() - n.ts < 24 * 3600 * 1000 ? n.text : "";
+      })(),
       stopLossNote,
       remainingOrders: C.MAX_ORDERS_PER_DAY - usedOrders,
     };
@@ -300,4 +308,4 @@ function start() {
   setInterval(tick, C.TICK_SECONDS * 1000);
 }
 
-module.exports = { start, etfSessionNow };
+module.exports = { start, etfSessionNow, riskProfile, decisionsWithOutcome };

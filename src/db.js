@@ -24,6 +24,9 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE TABLE IF NOT EXISTS news (
   url TEXT PRIMARY KEY, ts INTEGER, headline TEXT, symbols TEXT
 );
+CREATE TABLE IF NOT EXISTS reviews (
+  ts INTEGER PRIMARY KEY, skipped INTEGER, flag TEXT, assessment TEXT, actions TEXT, raw TEXT
+);
 `);
 
 module.exports = {
@@ -79,6 +82,14 @@ module.exports = {
     return db
       .prepare("SELECT * FROM events WHERE type=? AND ts>? ORDER BY ts DESC")
       .all(type, Date.now() - hours * 3600 * 1000);
+  },
+  addReview(skipped, flag, assessment, actions, raw) {
+    db.prepare("INSERT OR REPLACE INTO reviews VALUES (?,?,?,?,?,?)").run(
+      Date.now(), skipped ? 1 : 0, flag || "", assessment || "", JSON.stringify(actions || []), raw || ""
+    );
+  },
+  lastReviews(n = 10) {
+    return db.prepare("SELECT * FROM reviews ORDER BY ts DESC LIMIT ?").all(n);
   },
   // Snapshot più vicino (a ritroso) a un istante: serve a valutare l'esito delle decisioni passate
   snapshotNear(ts) {

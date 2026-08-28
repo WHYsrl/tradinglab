@@ -80,12 +80,17 @@
   </div>
 
   <div style="margin-top:16px">
+    <div class="lbl">SUPERVISIONE &middot; FABLE</div>
+    <div id="reviews"></div>
+  </div>
+
+  <div style="margin-top:16px">
     <div class="lbl">ATTIVIT&Agrave; RECENTE</div>
     <div id="events" class="card" style="padding:8px 14px"></div>
   </div>
 
   <div class="footer">
-    Conto paper Alpaca · stop-loss automatico per posizione · nessuna consulenza finanziaria · ETF 24/5 (limit fuori orario regolare), crypto 24/7 · monitor ogni 60s, notizie ogni 5 min ·
+    Conto paper Alpaca · stop-loss automatico per posizione · nessuna consulenza finanziaria · ETF 24/5 (limit fuori orario regolare), crypto 24/7 · monitor ogni 60s, notizie ogni 5 min, review Fable ogni 30 min ·
     le decisioni scattano su trigger di prezzo, notizie rilevanti o check-in programmati.
   </div>
 </div>
@@ -155,7 +160,7 @@ async function load(){
     retEl.textContent = pct(ret);
     retEl.style.color = ret >= 0 ? "var(--up)" : "var(--down)";
     document.getElementById("cash").textContent = usd(s.account.cash);
-    document.getElementById("risk").textContent = s.risk;
+    document.getElementById("risk").textContent = s.risk + (s.risk_base && s.risk !== s.risk_base ? " (ridotto, base " + s.risk_base + ")" : "");
     document.getElementById("stop").textContent = "-" + (s.config.stop*100) + "% dal picco";
 
     const mode = document.getElementById("mode");
@@ -189,6 +194,28 @@ async function load(){
       const nExec = (d.orders?.executed||[]).length;
       log.innerHTML += `<div class="entry"><div class="head"><span>${dt(d.ts)}</span><span>${nExec} ordini eseguiti</span></div><div class="view">${d.view||""}</div><div style="font-family:var(--mono);font-size:11px;color:var(--soft)">trigger: ${d.trigger}</div>${ops}</div>`;
     }
+    // supervisione: le review periodiche di Fable
+    const rvEl = document.getElementById("reviews");
+    const flagColor = { ok: "var(--up)", warning: "#B7791F", critical: "var(--down)" };
+    const rvs = (s.reviews || []).filter(r => !r.skipped).slice(0, 3);
+    const lastRv = (s.reviews || [])[0];
+    rvEl.innerHTML = "";
+    if (!s.reviews || !s.reviews.length) {
+      rvEl.innerHTML = "<div class=\'card\' style=\'border-style:dashed;color:var(--soft);font-size:13px\'>Prima review in arrivo (cadenza: ogni 30 minuti).</div>";
+    } else {
+      if (lastRv && lastRv.skipped) {
+        rvEl.innerHTML += `<div style="font-family:var(--mono);font-size:11px;color:var(--soft);margin-bottom:6px">${dt(lastRv.ts)} · review saltata: nessuna attività</div>`;
+      }
+      for (const r of rvs) {
+        let acts = "";
+        for (const a0 of r.actions || []) {
+          acts += `<div class="op"><span style="color:${a0.ok ? "var(--cobalt)" : "var(--soft)"}">↳ ${a0.type}${a0.symbol ? " " + a0.symbol : ""}${a0.profile ? " → " + a0.profile : ""}</span><div class="reason">${a0.reason || a0.note || ""}${a0.ok === false ? " (non applicata: " + (a0.why || "") + ")" : ""}</div></div>`;
+        }
+        rvEl.innerHTML += `<div class="entry" style="border-left-color:${flagColor[r.flag] || "var(--cobalt)"}"><div class="head"><span>${dt(r.ts)}</span><span style="color:${flagColor[r.flag] || "var(--soft)"}">${(r.flag || "ok").toUpperCase()}</span></div><div class="view">${r.assessment || ""}</div>${acts}</div>`;
+      }
+      if (!rvs.length && lastRv && !lastRv.skipped) {}
+    }
+
     // attività recente: il battito del sistema anche quando non decide
     const evEl = document.getElementById("events");
     const evLabel = { boot: "avvio", session_start: "sessione decisionale", trigger_ignored: "trigger osservato (non operativo)", stop_loss: "STOP-LOSS", halt: "HALT", resume: "ripresa", error: "errore", waiting_keys: "in attesa delle chiavi Alpaca" };

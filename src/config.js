@@ -35,6 +35,11 @@ module.exports = {
   MAX_ORDERS_PER_DAY: 12,
   CLOSED_SNAPSHOT_EVERY_TICKS: 5, // a borsa chiusa uno snapshot ogni ~5 min (le crypto si muovono comunque)
 
+  // Supervisore: review periodica con Fable che analizza l'andamento e può SOLO ridurre il rischio
+  SUPERVISOR_MODEL: process.env.SUPERVISOR_MODEL || "claude-fable-5",
+  SUPERVISOR_EVERY_MIN: Number(process.env.SUPERVISOR_EVERY_MIN) || 30,
+  SUPERVISOR_MAX_TOKENS: 1000,
+
   // Kill switch automatico TRAILING: se l'equity scende oltre X% dal PICCO (high-water mark)
   // il trading si ferma da solo. Protegge anche i profitti accumulati, non solo il capitale iniziale.
   GLOBAL_STOP_DRAWDOWN: 0.20,

@@ -8,6 +8,7 @@ Sistema autonomo che monitora prezzi e notizie sui mercati internazionali (ETF U
 - `src/engine.js` — chiamata all'API Claude (temperature 0) con quadro di mercato completo: prezzi, variazione odierna con segno, trend a 5 giorni, P/L delle decisioni passate → JSON operativo
 - `src/risk.js` — limiti hard: esposizione max, size max per operazione, tetto ordini/giorno (budget residuo applicato anche dentro la singola sessione)
 - `src/alpaca.js` — dati di mercato, notizie e ordini (conto paper)
+- `src/supervisor.js` — review periodica (default ogni 30 min) con Claude Fable: valuta l'andamento e può applicare SOLO correttivi conservativi (halt, chiusura posizioni, cancellazione ordini, profilo più prudente, note al motore); salta la chiamata quando non c'è attività
 - `src/server.js` + `public/index.html` — dashboard mobile con equity curve, registro decisioni e kill switch manuale
 - `src/db.js` — SQLite su disco persistente: ogni snapshot, decisione e motivazione viene salvata (è il dataset dell'esperimento)
 
@@ -38,6 +39,7 @@ Costo indicativo: istanza Starter ~7 $/mese + disco ~0,25 $/mese + consumo API A
 - **Tetto ordini**: massimo 12 al giorno.
 - **Crypto**: sub-tetto di esposizione (10% / 20% / 40% dell'equity per profilo), trigger di prezzo più larghi (3% / 2.5% / 2%) e trading 24/7.
 - **ETF 24/5**: fuori dall'orario regolare (pre-market, after-hours e sessione overnight, da domenica sera a venerdì sera ora di New York) gli ordini ETF vengono piazzati come limit con `extended_hours` e un piccolo buffer di prezzo (0,2%); liquidità ridotta, il modello ne è avvisato. Nel weekend restano negoziabili solo le crypto. I limit non eseguiti vengono cancellati all'inizio della sessione decisionale successiva.
+- **Supervisore Fable**: può solo ridurre il rischio, mai aumentarlo; la ripresa da un halt resta manuale. Modello e cadenza configurabili via `SUPERVISOR_MODEL` / `SUPERVISOR_EVERY_MIN`.
 - Il risk layer taglia qualunque ordine oltre i limiti del profilo, qualunque cosa dica il modello.
 
 ## Metodo sperimentale suggerito

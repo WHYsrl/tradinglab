@@ -47,6 +47,7 @@ PORTAFOGLIO:
 - Ordini ancora disponibili oggi: ${ctx.remainingOrders}
 
 ULTIME DECISIONI E COME SONO ANDATE: ${ctx.lastDecisionsSummary || "nessuna"}
+${ctx.supervisorNote ? "\nINDICAZIONE DEL SUPERVISORE (review periodica indipendente): " + ctx.supervisorNote : ""}
 ${ctx.stopLossNote ? "\nATTENZIONE: " + ctx.stopLossNote + "\n" : ""}
 NOTIZIE RECENTI:
 ${newsList}
