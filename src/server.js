@@ -44,6 +44,8 @@ app.get("/api/state", auth, async (_req, res) => {
       },
       market_open: clock.is_open,
       etf_session: monitor.etfSessionNow(clock),
+      next_open: clock.next_open,
+      next_close: clock.next_close,
       halted: db.kvGet("halted"),
       trading_enabled: settings.tradingEnabled(),
       risk: monitor.riskProfile(),

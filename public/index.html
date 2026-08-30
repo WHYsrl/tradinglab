@@ -193,6 +193,30 @@
 
   <!-- ————— PANORAMICA ————— -->
   <section class="view on" id="view-home">
+    <div class="card" style="padding:14px 18px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">
+        <div><span class="lbl" style="margin:0;display:inline">NEW YORK</span> <span class="num" id="nyTime" style="font-size:21px;font-weight:700;margin-left:6px">—</span>
+          <span style="color:var(--mut2);font-family:var(--mono);font-size:11px;margin-left:10px">Roma <span id="itTime" class="num">—</span></span></div>
+        <div style="text-align:right"><div id="phaseName" style="font-weight:700;font-size:13px">—</div>
+          <div id="countdown" style="font-family:var(--mono);font-size:11px;color:var(--mut);margin-top:2px">—</div></div>
+      </div>
+      <div id="strip" style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:12px;position:relative;background:var(--line)">
+        <div style="width:16.67%;background:rgba(76,125,255,.14)"></div>
+        <div style="width:22.92%;background:rgba(240,185,11,.28)"></div>
+        <div style="width:27.08%;background:var(--accent)"></div>
+        <div style="width:16.66%;background:rgba(240,185,11,.28)"></div>
+        <div style="width:16.67%;background:rgba(76,125,255,.14)"></div>
+        <div id="nowMark" style="position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;box-shadow:0 0 6px rgba(255,255,255,.8);left:0"></div>
+      </div>
+      <div style="position:relative;height:12px;margin-top:4px;font-family:var(--mono);font-size:9px;color:var(--mut2)">
+        <span style="position:absolute;left:0">00</span>
+        <span style="position:absolute;left:16.67%">04</span>
+        <span style="position:absolute;left:39.6%">09:30</span>
+        <span style="position:absolute;left:66.7%">16:00</span>
+        <span style="position:absolute;left:83.3%">20:00</span>
+        <span style="position:absolute;right:0">24</span>
+      </div>
+    </div>
     <div class="card">
       <div class="lbl">EQUITY</div>
       <div class="eqrow"><span class="eq num" id="equity">—</span><span class="chg up num" id="ret">—</span></div>
@@ -448,6 +472,7 @@ async function load(){
     else { st.textContent="ATTIVO"; dot.style.background="var(--up)"; dot.style.boxShadow="0 0 8px var(--up)"; }
     const sess = { regular:"borsa aperta", extended:"sessione estesa · ETF in limit", closed:"weekend · solo crypto" };
     document.getElementById("sessTxt").textContent = sess[s.etf_session] || (s.market_open?"borsa aperta":"borsa chiusa");
+    window.__mkt = { nextOpen: s.next_open ? Date.parse(s.next_open) : null, nextClose: s.next_close ? Date.parse(s.next_close) : null };
     for (const id of ["haltBtn","haltBtn2"]) document.getElementById(id).style.display = s.halted ? "none" : "";
     for (const id of ["resumeBtn","resumeBtn2"]) document.getElementById(id).style.display = s.halted ? "" : "none";
 
@@ -735,6 +760,60 @@ async function loadStats(range){
 document.querySelectorAll("#rangePills button").forEach(b => b.onclick = () => loadStats(b.dataset.r));
 const _show = show;
 show = function(v){ _show(v); if (v === "stats") loadStats(curRange); };
+
+/* ————— orologio di borsa: fasi 24/5 NY + countdown (orari ufficiali via Alpaca) ————— */
+const DOW = {Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6};
+function nyParts(){
+  const parts = new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",weekday:"short",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).formatToParts(new Date());
+  const get = t => parts.find(x=>x.type===t).value;
+  return { wd:get("weekday"), h:+get("hour"), m:+get("minute"), s:+get("second") };
+}
+function fmtDur(ms){
+  if (ms == null || ms < 0) return "—";
+  const s = Math.floor(ms/1000), d = Math.floor(s/86400), h = Math.floor((s%86400)/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  if (d > 0) return d+"g "+h+"h "+m+"m";
+  if (h > 0) return h+"h "+String(m).padStart(2,"0")+"m";
+  return m+"m "+String(sec).padStart(2,"0")+"s";
+}
+const locT = ts => new Date(ts).toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"});
+function tickClock(){
+  const el = document.getElementById("nyTime");
+  if (!el) return;
+  const now = Date.now();
+  el.textContent = new Date(now).toLocaleTimeString("en-GB",{timeZone:"America/New_York",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  document.getElementById("itTime").textContent = new Date(now).toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  const p = nyParts();
+  const mins = p.h*60 + p.m;
+  const wdN = DOW[p.wd] ?? 0;
+  const weekend = wdN === 6 || (wdN === 0 && mins < 1200) || (wdN === 5 && mins >= 1200);
+  let phase, col;
+  if (weekend){ phase = "Weekend · solo crypto"; col = "var(--mut)"; }
+  else if (mins >= 570 && mins < 960){ phase = "Borsa aperta"; col = "var(--up)"; }
+  else if (mins >= 240 && mins < 570){ phase = "Pre-market · ETF in limit"; col = "var(--warn)"; }
+  else if (mins >= 960 && mins < 1200){ phase = "After-hours · ETF in limit"; col = "var(--warn)"; }
+  else { phase = "Overnight · ETF in limit"; col = "var(--warn)"; }
+  const pn = document.getElementById("phaseName");
+  pn.textContent = phase; pn.style.color = col;
+  const mk = window.__mkt || {};
+  const cd = document.getElementById("countdown");
+  if (weekend){
+    const idx = wdN*1440 + mins;
+    const delta = (1200 - idx + 7*1440) % (7*1440); // prossima domenica 20:00 NY
+    cd.textContent = "trading ETF riprende tra " + fmtDur(delta*60000 - p.s*1000) + " · dom 20:00 NY";
+  } else if (mins >= 570 && mins < 960 && mk.nextClose){
+    cd.textContent = "chiusura tra " + fmtDur(mk.nextClose - now) + " · " + locT(mk.nextClose) + " ora italiana";
+  } else if (mk.nextOpen){
+    cd.textContent = "apertura regolare tra " + fmtDur(mk.nextOpen - now) + " · " + locT(mk.nextOpen) + " ora italiana";
+  } else {
+    cd.textContent = "—";
+  }
+  const nm = document.getElementById("nowMark");
+  if (nm) nm.style.left = ((mins + p.s/60)/1440*100).toFixed(2) + "%";
+  const strip = document.getElementById("strip");
+  if (strip) strip.style.opacity = weekend ? .35 : 1;
+}
+setInterval(tickClock, 1000);
+tickClock();
 
 load();
 setInterval(load, 60000);
