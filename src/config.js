@@ -7,9 +7,18 @@ module.exports = {
     "SPY (S&P 500 USA), QQQ (Nasdaq 100), EZU (Eurozona), EWJ (Giappone), EEM (mercati emergenti), GLD (oro)",
 
   // Azioni USA singole (mega-cap liquide; soglie trigger più larghe: più volatili degli indici)
-  STOCKS: ["AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "JPM", "XOM"],
-  STOCK_DESC:
-    "AAPL (Apple), MSFT (Microsoft), NVDA (Nvidia), GOOGL (Alphabet), AMZN (Amazon), META (Meta), TSLA (Tesla), AVGO (Broadcom), JPM (JPMorgan), XOM (Exxon)",
+  STOCKS: [
+    // mega-cap core
+    "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "JPM", "XOM",
+    // tech/AI e filiera chip (TSM e ASML sono ADR internazionali)
+    "AMD", "TSM", "ASML", "PLTR",
+    // salute
+    "LLY", "NVO", "UNH",
+    // consumo
+    "WMT", "COST", "NFLX",
+    // industria, difesa, pagamenti, proxy crypto
+    "CAT", "RTX", "V", "COIN",
+  ],
   STOCK_TRIGGER_MULT: 1.5, // soglia trigger azioni = priceTriggerPct * questo fattore
   MAX_STOCKS: 30, // tetto del bacino azioni modificabile dalla dashboard
 
