@@ -8,6 +8,7 @@ const C = require("./config");
 const db = require("./db");
 const alpaca = require("./alpaca");
 const settings = require("./settings");
+const anthropic = require("./anthropic");
 
 let running = false;
 const PRUDENCE_ORDER = ["prudente", "bilanciato", "aggressivo"];
@@ -66,21 +67,11 @@ function extractJSON(text) {
 }
 
 async function callFable(prompt) {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: settings.supervisorModel(),
-      max_tokens: C.SUPERVISOR_MAX_TOKENS,
-      messages: [{ role: "user", content: prompt }],
-    }),
+  const data = await anthropic.call({
+    model: settings.supervisorModel(),
+    maxTokens: C.SUPERVISOR_MAX_TOKENS,
+    prompt,
   });
-  if (!res.ok) throw new Error(`API Anthropic ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const data = await res.json();
   const text = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n");
   return { parsed: extractJSON(text), raw: text };
 }

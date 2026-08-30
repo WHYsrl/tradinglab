@@ -1,5 +1,6 @@
 const C = require("./config");
 const settings = require("./settings");
+const anthropic = require("./anthropic");
 
 function fmtPct(n) {
   if (n === null || n === undefined || Number.isNaN(Number(n))) return "n/d";
@@ -69,21 +70,11 @@ function extractJSON(text) {
 }
 
 async function decide(ctx) {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: settings.model(),
-      max_tokens: C.MAX_TOKENS,
-      messages: [{ role: "user", content: buildPrompt(ctx) }],
-    }),
+  const data = await anthropic.call({
+    model: settings.model(),
+    maxTokens: C.MAX_TOKENS,
+    prompt: buildPrompt(ctx),
   });
-  if (!res.ok) throw new Error(`API Anthropic ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const data = await res.json();
   const text = (data.content || [])
     .filter((b) => b.type === "text")
     .map((b) => b.text)
