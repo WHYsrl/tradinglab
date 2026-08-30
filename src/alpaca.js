@@ -107,6 +107,27 @@ module.exports = {
     });
   },
 
+  // Storico degli eseguiti (fills): prezzo e quantita reali di ogni operazione, stop-loss inclusi
+  async fills(maxPages = 5) {
+    let out = [];
+    let pageToken = null;
+    for (let i = 0; i < maxPages; i++) {
+      const q = pageToken ? `&page_token=${pageToken}` : "";
+      const j = await req(TRADE_BASE, `/v2/account/activities/FILL?page_size=100&direction=desc${q}`);
+      if (!Array.isArray(j) || !j.length) break;
+      out = out.concat(j);
+      if (j.length < 100) break;
+      pageToken = j[j.length - 1].id;
+    }
+    return out.map((f) => ({
+      ts: new Date(f.transaction_time).getTime(),
+      symbol: f.symbol,
+      side: f.side,
+      qty: Number(f.qty),
+      price: Number(f.price),
+    }));
+  },
+
   // Ordine LIMIT per le sessioni estese ETF (pre-market, after-hours, overnight 24/5):
   // fuori dall'orario regolare Alpaca accetta solo limit + extended_hours (qty anche frazionaria)
   submitLimitOrder({ symbol, qty, side, limit_price }) {

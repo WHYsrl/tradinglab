@@ -75,6 +75,12 @@ module.exports = {
     const step = Math.ceil(rows.length / limitPoints);
     return rows.filter((_, i) => i % step === 0 || i === rows.length - 1);
   },
+  historySince(fromTs, limitPoints = 400) {
+    const rows = db.prepare("SELECT ts, equity FROM snapshots WHERE ts >= ? ORDER BY ts").all(fromTs || 0);
+    if (rows.length <= limitPoints) return rows;
+    const step = Math.ceil(rows.length / limitPoints);
+    return rows.filter((_, i) => i % step === 0 || i === rows.length - 1);
+  },
   lastDecisions(n = 30) {
     return db.prepare("SELECT * FROM decisions ORDER BY ts DESC LIMIT ?").all(n);
   },

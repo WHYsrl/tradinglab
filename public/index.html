@@ -128,6 +128,20 @@
   .chip a{color:var(--down);cursor:pointer;font-weight:700}
   .hint{font-family:var(--mono);font-size:11px;color:var(--mut);margin-top:10px;min-height:14px}
   #err{display:none;margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--down);background:rgba(246,70,93,.1);border:1px solid rgba(246,70,93,.4);border-radius:12px;padding:10px 14px}
+  .rpills{display:flex;gap:6px;overflow-x:auto;padding:2px;margin-top:14px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .rpills::-webkit-scrollbar{display:none}
+  .rpills button{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--mut);font-family:var(--mono);font-size:12px;font-weight:700;padding:8px 14px;border-radius:999px;cursor:pointer}
+  .rpills button.on{background:rgba(76,125,255,.16);border-color:rgba(76,125,255,.5);color:var(--accent2)}
+  .bigchg{font-size:34px;font-weight:700;letter-spacing:-.01em}
+  .trow{display:flex;gap:10px;align-items:baseline;font-family:var(--mono);font-size:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .trow:last-child{border-bottom:0}
+  .trow .t{color:var(--mut2);flex:none;width:86px}
+  .badge-b{color:var(--up);font-weight:700}
+  .badge-s{color:var(--down);font-weight:700}
+  .srow{padding:11px 0;border-bottom:1px solid var(--line)}
+  .srow:last-child{border-bottom:0}
+  .srow .l1{display:flex;justify-content:space-between;align-items:baseline}
+  .srow .l2{font-family:var(--mono);font-size:11px;color:var(--mut);margin-top:3px;display:flex;gap:14px;flex-wrap:wrap}
   .foot{margin-top:26px;font-family:var(--mono);font-size:10px;color:var(--mut2);line-height:1.7}
   /* ————— responsive ————— */
   @media (max-width:719px){
@@ -153,6 +167,7 @@
   <div class="brand"><b>Trading Lab</b><span>ESPERIMENTO 01 · ALPACA PAPER</span></div>
   <nav class="tabs" id="tabsTop">
     <button data-v="home" class="on">Panoramica</button>
+    <button data-v="stats">Storico</button>
     <button data-v="act">Attività</button>
     <button data-v="ask">Motore</button>
     <button data-v="set">Impostazioni</button>
@@ -199,6 +214,27 @@
         <div id="lastSession"></div>
         <button class="btn ghost" style="width:100%;margin-top:12px" onclick="show('act')">Tutte le sessioni →</button>
       </div>
+    </div>
+  </section>
+
+  <!-- ————— STORICO ————— -->
+  <section class="view" id="view-stats">
+    <div class="rpills" id="rangePills">
+      <button data-r="all" class="on">Tutto</button><button data-r="1h">1h</button><button data-r="1d">1g</button><button data-r="7d">7g</button><button data-r="30d">30g</button><button data-r="3m">3m</button><button data-r="6m">6m</button><button data-r="12m">12m</button>
+    </div>
+    <div class="card">
+      <div class="lbl" id="stLbl">PERIODO</div>
+      <div class="eqrow"><span class="bigchg num" id="stChg">—</span><span class="chg up num" id="stPct">—</span></div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--mut);margin-top:6px" id="stMeta">—</div>
+      <div class="chartbox" style="height:190px"><canvas id="chartS"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="lbl">PER TITOLO <span style="letter-spacing:0;color:var(--mut2)">· P/L realizzato a costo medio nel periodo</span></div>
+      <div id="perSymbol"></div>
+    </div>
+    <div class="card">
+      <div class="lbl">OPERAZIONI ESEGUITE <span style="letter-spacing:0;color:var(--mut2)" id="stCounts"></span></div>
+      <div id="tradeList"></div>
     </div>
   </section>
 
@@ -263,6 +299,7 @@
 
 <nav class="bbar"><div class="row">
   <button data-v="home" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>Panoramica</button>
+  <button data-v="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Storico</button>
   <button data-v="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg>Attività</button>
   <button data-v="ask"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg>Motore</button>
   <button data-v="set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h10M18 8h2M4 16h2M10 16h10"/><circle cx="16" cy="8" r="2.4"/><circle cx="7" cy="16" r="2.4"/></svg>Regole</button>
@@ -577,6 +614,127 @@ document.getElementById("haltBtn2").onclick = doHalt;
 document.getElementById("resumeBtn").onclick = doResume;
 document.getElementById("resumeBtn2").onclick = doResume;
 document.getElementById("refreshBtn").onclick = load;
+
+/* ————— vista Storico ————— */
+let curRange = "all", statsBusy = false, lastStatsHistory = [];
+function drawChartS(history, hoverX){
+  lastStatsHistory = history || [];
+  const canvas = document.getElementById("chartS");
+  if (!canvas || !canvas.parentElement.clientWidth) return;
+  const box = canvas.parentElement;
+  const W = box.clientWidth, H = box.clientHeight;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+"px"; canvas.style.height = H+"px";
+  const g = canvas.getContext("2d");
+  g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,W,H);
+  const pts = lastStatsHistory.filter(h => h && h.equity != null);
+  g.font = "10px ui-monospace,Menlo,monospace";
+  if (pts.length < 2){ g.fillStyle="#5C6779"; g.fillText("Dati insufficienti in questo periodo",4,20); return; }
+  const pad = {l:4, r:58, t:12, b:20};
+  let min=Infinity, max=-Infinity;
+  for (const p of pts){ if(p.equity<min)min=p.equity; if(p.equity>max)max=p.equity; }
+  if (max-min<1e-9){ max+=1; min-=1; }
+  const t0=pts[0].ts, t1=pts[pts.length-1].ts, tspan=Math.max(1,t1-t0);
+  const X = ts => pad.l + ((ts-t0)/tspan)*(W-pad.l-pad.r);
+  const Y = v => pad.t + (1-(v-min)/(max-min))*(H-pad.t-pad.b);
+  g.strokeStyle="rgba(44,54,72,.55)"; g.lineWidth=1; g.fillStyle="#5C6779";
+  for (const v of [min,(min+max)/2,max]){
+    const y=Y(v);
+    g.beginPath(); g.moveTo(pad.l,y); g.lineTo(W-pad.r,y); g.stroke();
+    g.fillText(Math.round(v).toLocaleString("it-IT"), W-pad.r+8, y+3);
+  }
+  const up = pts[pts.length-1].equity >= pts[0].equity;
+  const col = up ? "#2EBD85" : "#F6465D";
+  const sp = pts.map(p => ({x:X(p.ts), y:Y(p.equity), ts:p.ts, v:p.equity}));
+  g.beginPath(); sp.forEach((p,i)=> i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));
+  const grd = g.createLinearGradient(0,pad.t,0,H-pad.b);
+  grd.addColorStop(0, up ? "rgba(46,189,133,.2)" : "rgba(246,70,93,.2)"); grd.addColorStop(1,"rgba(0,0,0,0)");
+  g.save(); g.lineTo(sp[sp.length-1].x,H-pad.b); g.lineTo(sp[0].x,H-pad.b); g.closePath(); g.fillStyle=grd; g.fill(); g.restore();
+  g.beginPath(); sp.forEach((p,i)=> i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));
+  g.strokeStyle=col; g.lineWidth=2; g.lineJoin="round"; g.stroke();
+  g.fillStyle="#5C6779";
+  g.fillText(dt(t0), pad.l, H-6);
+  const lb=dt(t1); g.fillText(lb, W-pad.r-g.measureText(lb).width, H-6);
+  if (hoverX != null){
+    let best=sp[0];
+    for (const p of sp) if (Math.abs(p.x-hoverX)<Math.abs(best.x-hoverX)) best=p;
+    g.strokeStyle="rgba(138,148,166,.5)"; g.setLineDash([3,3]);
+    g.beginPath(); g.moveTo(best.x,pad.t); g.lineTo(best.x,H-pad.b); g.stroke(); g.setLineDash([]);
+    g.beginPath(); g.arc(best.x,best.y,4,0,Math.PI*2); g.fillStyle=col; g.fill();
+    g.lineWidth=2; g.strokeStyle="#0B0E14"; g.stroke();
+    const txt = dt(best.ts)+" · "+usd2(best.v);
+    g.font="11px ui-monospace,Menlo,monospace";
+    const tw = g.measureText(txt).width + 16;
+    const bx = Math.min(Math.max(best.x-tw/2, 2), W-pad.r-tw);
+    g.fillStyle="rgba(23,28,39,.96)"; g.strokeStyle="#2C3648"; g.lineWidth=1;
+    g.beginPath();
+    if (g.roundRect) g.roundRect(bx, 2, tw, 22, 7); else g.rect(bx, 2, tw, 22);
+    g.fill(); g.stroke();
+    g.fillStyle="#E8EDF5"; g.fillText(txt, bx+8, 17);
+  }
+}
+(function(){
+  const c = document.getElementById("chartS");
+  const mv = e => { const r=c.getBoundingClientRect(); drawChartS(lastStatsHistory, e.clientX-r.left); };
+  c.addEventListener("pointermove", mv);
+  c.addEventListener("pointerdown", mv);
+  c.addEventListener("pointerleave", () => drawChartS(lastStatsHistory));
+})();
+
+const rangeName = { all:"dall'inizio", "1h":"ultima ora", "1d":"ultime 24 ore", "7d":"ultimi 7 giorni", "30d":"ultimi 30 giorni", "3m":"ultimi 3 mesi", "6m":"ultimi 6 mesi", "12m":"ultimi 12 mesi" };
+
+async function loadStats(range){
+  if (statsBusy) return;
+  statsBusy = true;
+  curRange = range;
+  document.querySelectorAll("#rangePills button").forEach(b => b.classList.toggle("on", b.dataset.r === range));
+  try {
+    const r = await fetch(`/api/stats?token=${encodeURIComponent(token)}&range=${range}`);
+    if (!r.ok) throw new Error(await r.text());
+    const st = await r.json();
+
+    document.getElementById("stLbl").textContent = ("ANDAMENTO · " + (rangeName[range]||range)).toUpperCase();
+    const chg = st.change_abs, pc = st.change_pct;
+    const el = document.getElementById("stChg");
+    el.textContent = chg != null ? usdS(chg) : "—";
+    el.style.color = chg >= 0 ? "var(--up)" : "var(--down)";
+    const pe = document.getElementById("stPct");
+    pe.textContent = pc != null ? pct(pc) : "—";
+    pe.className = "chg num " + (pc >= 0 ? "up" : "down");
+    document.getElementById("stMeta").textContent =
+      (st.from_ts ? "dal " + dt(st.from_ts) + " · " : "") +
+      "equity " + (st.equity_start != null ? usd2(st.equity_start) : "—") + " → " + usd2(st.equity_now);
+    drawChartS(st.history);
+
+    const perEl = document.getElementById("perSymbol");
+    perEl.innerHTML = (st.per_symbol||[]).length ? "" : "<div class='empty'>Nessuna operazione nel periodo.</div>";
+    for (const p of st.per_symbol||[]){
+      const rc = p.realized >= 0 ? "var(--up)" : "var(--down)";
+      perEl.innerHTML += `<div class="srow">
+        <div class="l1"><b>${esc(p.symbol)}</b><span class="num" style="color:${rc};font-weight:700">${p.sellQty ? usdS(p.realized) : "—"}</span></div>
+        <div class="l2"><span>${p.n} op.</span>
+          <span>comprato ${usd(p.buys)}${p.avgBuy ? " @ " + usd2(p.avgBuy) : ""}</span>
+          <span>venduto ${usd(p.sells)}${p.avgSell ? " @ " + usd2(p.avgSell) : ""}</span></div>
+      </div>`;
+    }
+
+    document.getElementById("stCounts").textContent = st.counts ? `· ${st.counts.fills} (${st.counts.buys} buy, ${st.counts.sells} sell)` : "";
+    const tl = document.getElementById("tradeList");
+    tl.innerHTML = (st.trades||[]).length ? "" : "<div class='empty'>Nessun eseguito nel periodo.</div>";
+    for (const t of st.trades||[]){
+      tl.innerHTML += `<div class="trow"><span class="t">${dt(t.ts)}</span><span class="${t.side==="buy"?"badge-b":"badge-s"}">${t.side==="buy"?"BUY":"SELL"}</span><b>${esc(t.symbol)}</b><span style="color:var(--mut)">${t.qty} @ ${usd2(t.price)}</span><span style="margin-left:auto" class="num">${usd2(t.qty*t.price)}</span></div>`;
+    }
+  } catch(e){
+    document.getElementById("stMeta").textContent = "Errore: " + e.message;
+  } finally {
+    statsBusy = false;
+  }
+}
+document.querySelectorAll("#rangePills button").forEach(b => b.onclick = () => loadStats(b.dataset.r));
+const _show = show;
+show = function(v){ _show(v); if (v === "stats") loadStats(curRange); };
 
 load();
 setInterval(load, 60000);

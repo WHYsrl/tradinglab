@@ -74,6 +74,64 @@ app.get("/api/state", auth, async (_req, res) => {
   }
 });
 
+// Statistiche di periodo: eseguiti reali (fills Alpaca), aggregati per titolo, curva equity
+app.get("/api/stats", auth, async (req, res) => {
+  if (!process.env.ALPACA_KEY_ID || !process.env.ALPACA_SECRET_KEY) {
+    return res.status(503).send("In attesa delle chiavi Alpaca.");
+  }
+  try {
+    const ranges = {
+      "1h": 3600e3, "1d": 86400e3, "7d": 7 * 86400e3, "30d": 30 * 86400e3,
+      "3m": 91 * 86400e3, "6m": 182 * 86400e3, "12m": 365 * 86400e3,
+    };
+    const range = ranges[req.query.range] ? req.query.range : "all";
+    const fromTs = ranges[range] ? Date.now() - ranges[range] : 0;
+
+    const [fills, account] = await Promise.all([alpaca.fills(), alpaca.account()]);
+    const trades = fills.filter((f) => f.ts >= fromTs);
+
+    // Aggregato per titolo nel periodo (P/L realizzato a costo medio: approssimazione dichiarata)
+    const per = {};
+    for (const f of trades) {
+      const p = per[f.symbol] || (per[f.symbol] = { symbol: f.symbol, n: 0, buys: 0, buyQty: 0, sells: 0, sellQty: 0 });
+      const amt = f.price * f.qty;
+      p.n++;
+      if (f.side === "buy") { p.buys += amt; p.buyQty += f.qty; }
+      else { p.sells += amt; p.sellQty += f.qty; }
+    }
+    for (const k of Object.keys(per)) {
+      const p = per[k];
+      p.avgBuy = p.buyQty ? p.buys / p.buyQty : null;
+      p.avgSell = p.sellQty ? p.sells / p.sellQty : null;
+      p.realized = p.avgBuy != null && p.sellQty
+        ? p.sells - p.avgBuy * Math.min(p.sellQty, p.buyQty)
+        : 0;
+    }
+
+    const history = db.historySince(fromTs, 400);
+    const eqNow = Number(account.equity);
+    const eqStart = history.length ? history[0].equity : null;
+    res.json({
+      range,
+      from_ts: fromTs || (history[0] && history[0].ts) || null,
+      equity_now: eqNow,
+      equity_start: eqStart,
+      change_abs: eqStart != null ? eqNow - eqStart : null,
+      change_pct: eqStart ? eqNow / eqStart - 1 : null,
+      history,
+      trades: trades.slice(0, 200),
+      per_symbol: Object.values(per).sort((a, b) => (b.buys + b.sells) - (a.buys + a.sells)),
+      counts: {
+        fills: trades.length,
+        buys: trades.filter((t) => t.side === "buy").length,
+        sells: trades.filter((t) => t.side === "sell").length,
+      },
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Proposte dell'utente: entrano nella prossima sessione decisionale del motore
 app.post("/api/suggest", auth, (req, res) => {
   const text = String((req.body || {}).text || "").trim().slice(0, 500);
