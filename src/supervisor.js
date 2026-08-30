@@ -192,9 +192,22 @@ async function reviewOnce(monitor) {
   }
 }
 
+// Fuori orario regolare le review rallentano: x2 in sessione estesa, x4 nel weekend
+function paceMultiplier() {
+  const p = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(new Date());
+  const wd = p.find((x) => x.type === "weekday").value;
+  const mins = +p.find((x) => x.type === "hour").value * 60 + +p.find((x) => x.type === "minute").value;
+  const weekend = wd === "Sat" || (wd === "Sun" && mins < 20 * 60) || (wd === "Fri" && mins >= 20 * 60);
+  if (weekend) return 4;
+  const regular = wd !== "Sun" && mins >= 9 * 60 + 30 && mins < 16 * 60;
+  return regular ? 1 : 2;
+}
+
 function schedule(monitor) {
   // cadenza letta a ogni giro: modificabile dalla dashboard senza riavvio
-  setTimeout(async () => { await reviewOnce(monitor); schedule(monitor); }, settings.supervisorEveryMin() * 60 * 1000);
+  setTimeout(async () => { await reviewOnce(monitor); schedule(monitor); }, settings.supervisorEveryMin() * paceMultiplier() * 60 * 1000);
 }
 
 function start(monitor) {

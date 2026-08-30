@@ -6,6 +6,7 @@ const risk = require("./risk");
 const settings = require("./settings");
 
 let tickCount = 0;
+let rawTick = 0;
 let running = false;
 let warnedNoKeys = false;
 
@@ -23,6 +24,20 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 // Sessione ETF: 'regular' (borsa aperta), 'extended' (pre-market/after-hours/overnight 24/5),
 // 'closed' (weekend: da venerdì 20:00 ET a domenica 20:00 ET)
+// Ritmo del monitor senza chiamate API: 1 = ogni tick (60s) in orario regolare,
+// 2 = un giro ogni ~2 min nelle sessioni estese, 5 = ogni ~5 min nel weekend (solo crypto)
+function paceFactor() {
+  const p = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(new Date());
+  const wd = p.find((x) => x.type === "weekday").value;
+  const mins = +p.find((x) => x.type === "hour").value * 60 + +p.find((x) => x.type === "minute").value;
+  const weekend = wd === "Sat" || (wd === "Sun" && mins < 20 * 60) || (wd === "Fri" && mins >= 20 * 60);
+  if (weekend) return 5;
+  const regular = wd !== "Sun" && mins >= 9 * 60 + 30 && mins < 16 * 60;
+  return regular ? 1 : 2;
+}
+
 function etfSessionNow(clock) {
   if (clock.is_open) return "regular";
   const p = new Intl.DateTimeFormat("en-US", {
@@ -81,6 +96,9 @@ async function tick() {
       }
       return;
     }
+    // A mercati chiusi si rallenta: meno chiamate API, stesso comportamento
+    rawTick++;
+    if (rawTick % paceFactor() !== 0) return;
     tickCount++;
     const [clock, account, positions, market] = await Promise.all([
       alpaca.clock(),

@@ -7,20 +7,29 @@ module.exports = {
     "SPY (S&P 500 USA), QQQ (Nasdaq 100), EZU (Eurozona), EWJ (Giappone), EEM (mercati emergenti), GLD (oro)",
 
   // Azioni USA singole (mega-cap liquide; soglie trigger più larghe: più volatili degli indici)
+  // 42 azioni: con 6 ETF e 2 crypto il paniere totale è di 50 strumenti
   STOCKS: [
     // mega-cap core
     "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "JPM", "XOM",
     // tech/AI e filiera chip (TSM e ASML sono ADR internazionali)
-    "AMD", "TSM", "ASML", "PLTR",
+    "AMD", "TSM", "ASML", "PLTR", "MU", "INTC",
+    // software enterprise
+    "ORCL", "CRM", "ADBE",
     // salute
-    "LLY", "NVO", "UNH",
-    // consumo
-    "WMT", "COST", "NFLX",
-    // industria, difesa, pagamenti, proxy crypto
-    "CAT", "RTX", "V", "COIN",
+    "LLY", "NVO", "UNH", "JNJ", "PFE",
+    // consumo e media
+    "WMT", "COST", "NFLX", "MCD", "NKE", "DIS",
+    // finanza e pagamenti
+    "V", "MA", "GS", "BRK.B",
+    // industria, difesa, aerospazio, logistica
+    "CAT", "RTX", "BA", "GE", "UPS",
+    // energia e utility
+    "CVX", "NEE",
+    // proxy azionario di BTC
+    "COIN",
   ],
   STOCK_TRIGGER_MULT: 1.5, // soglia trigger azioni = priceTriggerPct * questo fattore
-  MAX_STOCKS: 30, // tetto del bacino azioni modificabile dalla dashboard
+  MAX_STOCKS: 50, // tetto del bacino azioni modificabile dalla dashboard
 
   // Universo crypto: negoziabile 24/7 su Alpaca (nelle posizioni compare senza slash: BTCUSD)
   CRYPTO_ASSETS: ["BTC/USD", "ETH/USD"],
