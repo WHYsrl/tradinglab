@@ -27,6 +27,11 @@ module.exports = {
     if (Array.isArray(kv)) return kv.filter((x) => typeof x === "string");
     return C.STOCKS;
   },
+  maxOrdersPerDay() {
+    const kv = Number(db.kvGet("cfg_max_orders"));
+    if (kv >= 6 && kv <= 60) return kv;
+    return C.MAX_ORDERS_PER_DAY;
+  },
   supervisorEveryMin() {
     const kv = Number(db.kvGet("cfg_supervisor_every_min"));
     if (kv >= 10 && kv <= 240) return kv;

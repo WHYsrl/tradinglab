@@ -243,7 +243,8 @@ async function tick() {
 
     const orderCountKey = `orders:${today()}`;
     const usedOrders = db.kvGet(orderCountKey, 0);
-    if (usedOrders >= C.MAX_ORDERS_PER_DAY) {
+    const maxOrders = settings.maxOrdersPerDay();
+    if (usedOrders >= maxOrders) {
       db.addEvent("trigger_ignored", { triggers, reason: "limite ordini giornaliero raggiunto" });
       db.kvSet("last_decision_prices", prices);
       return;
@@ -292,7 +293,7 @@ async function tick() {
       })(),
       stopLossNote,
       userProposals: pendingProps.map((x) => "- " + x.text).join("\n"),
-      remainingOrders: C.MAX_ORDERS_PER_DAY - usedOrders,
+      remainingOrders: maxOrders - usedOrders,
     };
 
     let parsed, raw;

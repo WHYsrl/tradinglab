@@ -57,7 +57,8 @@ module.exports = {
   TICK_SECONDS: 60,          // frequenza lettura prezzi
   NEWS_EVERY_TICKS: 5,       // notizie ogni 5 tick (~5 min)
   DECISION_COOLDOWN_MIN: 20, // minimo tra due decisioni (salvo emergenza: 2x soglia)
-  MAX_ORDERS_PER_DAY: 12,
+  MAX_ORDERS_PER_DAY: 24,      // default: regolabile dalla dashboard (tarato sul paniere da 50)
+  MAX_ORDERS_PER_SESSION: 4,   // una singola sessione non puo bruciare il budget del giorno
   CLOSED_SNAPSHOT_EVERY_TICKS: 5, // a borsa chiusa uno snapshot ogni ~5 min (le crypto si muovono comunque)
 
   // Supervisore: review periodica con Fable che analizza l'andamento e può SOLO ridurre il rischio

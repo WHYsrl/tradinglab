@@ -46,7 +46,7 @@ PORTAFOGLIO:
 - Profilo di rischio: ${r.label} → esposizione max ${r.maxExposure * 100}% dell'equity, singola operazione max ${r.maxTradePct * 100}% (${(ctx.equity * r.maxTradePct).toFixed(0)} USD)
 - Stop-loss automatico (lo applica il sistema, non devi gestirlo tu): -${r.stopLossPct * 100}% sugli ETF, -${r.cryptoStopLossPct * 100}% sulle crypto
 - Crypto: esposizione massima ${r.cryptoExposure * 100}% dell'equity (sub-tetto dentro l'esposizione totale)
-- Ordini ancora disponibili oggi: ${ctx.remainingOrders}
+- Ordini ancora disponibili oggi: ${ctx.remainingOrders} (max ${C.MAX_ORDERS_PER_SESSION} per sessione): il budget e scarso, spendilo solo sulle occasioni migliori
 
 ULTIME DECISIONI E COME SONO ANDATE: ${ctx.lastDecisionsSummary || "nessuna"}
 ${ctx.supervisorNote ? "\nINDICAZIONE DEL SUPERVISORE (review periodica indipendente): " + ctx.supervisorNote : ""}
