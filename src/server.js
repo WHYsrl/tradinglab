@@ -57,6 +57,7 @@ app.get("/api/state", auth, async (_req, res) => {
         supervisor_every_min: settings.supervisorEveryMin(),
         stocks: settings.stocks(),
         max_orders: settings.maxOrdersPerDay(),
+        session_orders: settings.maxOrdersPerSession(),
         risk_override: db.kvGet("risk_override"),
       },
       positions,
@@ -200,9 +201,15 @@ app.post("/api/settings", auth, async (req, res) => {
   }
   if (b.max_orders !== undefined) {
     const n = Number(b.max_orders);
-    if (!(n >= 6 && n <= 60)) return res.status(400).send("tetto ordini: valore tra 6 e 60");
+    if (!(n >= 6 && n <= 480)) return res.status(400).send("tetto ordini: valore tra 6 e 480");
     db.kvSet("cfg_max_orders", n);
     changes.max_orders = n;
+  }
+  if (b.session_orders !== undefined) {
+    const n = Number(b.session_orders);
+    if (!(n >= 2 && n <= 60)) return res.status(400).send("ordini per sessione: valore tra 2 e 60");
+    db.kvSet("cfg_session_orders", n);
+    changes.session_orders = n;
   }
   if (b.clear_derisk) {
     db.kvSet("risk_override", null);

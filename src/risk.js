@@ -19,7 +19,7 @@ function clampDecisions(decisions, ctx) {
   const exposureCap = ctx.equity * r.maxExposure;
   const cryptoCap = ctx.equity * r.cryptoExposure;
   // Budget ordini residuo del giorno: la sessione non può sforare il tetto giornaliero
-  const maxNew = Math.max(0, Math.min(ctx.remainingOrders ?? C.MAX_ORDERS_PER_DAY, C.MAX_ORDERS_PER_SESSION));
+  const maxNew = Math.max(0, Math.min(ctx.remainingOrders ?? C.MAX_ORDERS_PER_DAY, settings.maxOrdersPerSession()));
   const universe = [...C.ASSETS, ...settings.stocks(), ...C.CRYPTO_ASSETS];
 
   for (const d of decisions || []) {

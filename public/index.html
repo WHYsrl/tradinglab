@@ -305,7 +305,8 @@
         <label class="fld">MOTORE<select id="set_model"><option>claude-opus-5</option><option>claude-sonnet-5</option><option>claude-fable-5</option></select></label>
         <label class="fld">SUPERVISORE<select id="set_smodel"><option>claude-fable-5</option><option>claude-opus-5</option><option>claude-sonnet-5</option></select></label>
         <label class="fld">REVIEW OGNI<select id="set_smin"><option value="15">15 min</option><option value="30">30 min</option><option value="60">1 ora</option><option value="120">2 ore</option></select></label>
-        <label class="fld">ORDINI / GIORNO<select id="set_maxord"><option value="12">12</option><option value="24">24</option><option value="36">36</option><option value="48">48</option></select></label>
+        <label class="fld">ORDINI / GIORNO<select id="set_maxord"><option value="12">12</option><option value="24">24</option><option value="48">48</option><option value="120">120</option><option value="240">240</option></select></label>
+        <label class="fld">PER SESSIONE<select id="set_sessord"><option value="4">4</option><option value="10">10</option><option value="20">20</option><option value="40">40</option></select></label>
       </div>
       <button class="btn pri" id="saveSettings" style="margin-top:14px">Salva — effetto immediato</button>
     </div>
@@ -564,6 +565,7 @@ async function load(){
       document.getElementById("set_smodel").value = s.settings.supervisor_model;
       document.getElementById("set_smin").value = String(s.settings.supervisor_every_min);
       if (s.settings.max_orders != null) document.getElementById("set_maxord").value = String(s.settings.max_orders);
+      if (s.settings.session_orders != null) document.getElementById("set_sessord").value = String(s.settings.session_orders);
     }
     document.getElementById("clearDerisk").style.display = s.settings && s.settings.risk_override ? "" : "none";
     const chipEl = document.getElementById("stockChips");
@@ -619,6 +621,7 @@ document.getElementById("saveSettings").onclick = async () => {
     supervisor_model: document.getElementById("set_smodel").value,
     supervisor_every_min: Number(document.getElementById("set_smin").value),
     max_orders: Number(document.getElementById("set_maxord").value),
+    session_orders: Number(document.getElementById("set_sessord").value),
   };
   const r = await fetch(`/api/settings?token=${encodeURIComponent(token)}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   document.getElementById("setMsg").textContent = r.ok ? "Salvato — effetto immediato, nessun riavvio." : "Errore: "+await r.text();

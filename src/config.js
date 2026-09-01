@@ -50,15 +50,15 @@ module.exports = {
 
   // Motore
   MODEL: process.env.MODEL || "claude-opus-5",
-  MAX_TOKENS: 4000, // i modelli gen-5 spendono parte del budget in ragionamento interno: serve margine
+  MAX_TOKENS: 8000, // i modelli gen-5 spendono parte del budget in ragionamento interno: serve margine
   // Nota: i modelli di generazione 5 non accettano `temperature` (thinking adattivo integrato)
 
   // Ritmo del monitor
   TICK_SECONDS: 60,          // frequenza lettura prezzi
   NEWS_EVERY_TICKS: 5,       // notizie ogni 5 tick (~5 min)
   DECISION_COOLDOWN_MIN: 20, // minimo tra due decisioni (salvo emergenza: 2x soglia)
-  MAX_ORDERS_PER_DAY: 24,      // default: regolabile dalla dashboard (tarato sul paniere da 50)
-  MAX_ORDERS_PER_SESSION: 4,   // una singola sessione non puo bruciare il budget del giorno
+  MAX_ORDERS_PER_DAY: 240,     // default: regolabile dalla dashboard
+  MAX_ORDERS_PER_SESSION: 40,  // regolabile dalla dashboard
   CLOSED_SNAPSHOT_EVERY_TICKS: 5, // a borsa chiusa uno snapshot ogni ~5 min (le crypto si muovono comunque)
 
   // Supervisore: review periodica con Fable che analizza l'andamento e può SOLO ridurre il rischio

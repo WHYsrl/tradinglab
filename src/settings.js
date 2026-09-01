@@ -29,8 +29,13 @@ module.exports = {
   },
   maxOrdersPerDay() {
     const kv = Number(db.kvGet("cfg_max_orders"));
-    if (kv >= 6 && kv <= 60) return kv;
+    if (kv >= 6 && kv <= 480) return kv;
     return C.MAX_ORDERS_PER_DAY;
+  },
+  maxOrdersPerSession() {
+    const kv = Number(db.kvGet("cfg_session_orders"));
+    if (kv >= 2 && kv <= 60) return kv;
+    return C.MAX_ORDERS_PER_SESSION;
   },
   supervisorEveryMin() {
     const kv = Number(db.kvGet("cfg_supervisor_every_min"));
